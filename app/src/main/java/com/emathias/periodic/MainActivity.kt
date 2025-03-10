@@ -13,9 +13,15 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PeriodicTheme {
                 Scaffold(
+                    topBar = { PeriodicTopAppBar() },
                     modifier = Modifier
                         .fillMaxSize()
                         .statusBarsPadding()
@@ -51,6 +58,22 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PeriodicTopAppBar() {
+    TopAppBar(
+        title = { Text("Periodic") },
+        navigationIcon = {
+            IconButton(onClick = { /* TODO: do something */ }) {
+                Icon(
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = "Localized description"
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -97,7 +120,8 @@ fun TodoListPreview(modifier: Modifier = Modifier) {
                 TodoItem("Item 1"),
                 TodoItem("Item 2"),
                 TodoItem("Item 4")
-            ), modifier
+            ),
+            modifier
         )
     }
 }
