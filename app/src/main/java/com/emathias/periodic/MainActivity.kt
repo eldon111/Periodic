@@ -56,9 +56,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TodoList(todoItems: List<TodoItem>, modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
-        items(
-            todoItems
-        ) { todoItem -> CheckableTodoItem(todoItem) }
+        items(todoItems) { todoItem ->
+            CheckableTodoItem(todoItem)
+        }
     }
 }
 
@@ -66,17 +66,21 @@ fun TodoList(todoItems: List<TodoItem>, modifier: Modifier = Modifier) {
 fun CheckableTodoItem(todoItem: TodoItem, modifier: Modifier = Modifier) {
     val (checkedState, onStateChange) = remember { mutableStateOf(false) }
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .height(56.dp)
             .toggleable(
                 value = checkedState,
                 onValueChange = { onStateChange(!checkedState) },
                 role = Role.Checkbox
-            )
-            .padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(checked = checkedState, onCheckedChange = null)
+        Checkbox(
+            checked = checkedState,
+            onCheckedChange = null,
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
         Text(
             text = todoItem.text,
             fontSize = 40.sp
