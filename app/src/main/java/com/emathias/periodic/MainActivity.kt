@@ -23,8 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -32,7 +30,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emathias.periodic.models.TodoItem
+import com.emathias.periodic.models.TodoListViewModel
 import com.emathias.periodic.ui.theme.PeriodicTheme
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,11 +47,6 @@ class MainActivity : ComponentActivity() {
                         .statusBarsPadding()
                 ) { innerPadding ->
                     TodoList(
-                        todoItems = listOf(
-                            TodoItem("Item 1"),
-                            TodoItem("Item 2"),
-                            TodoItem("Item 4")
-                        ),
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -77,30 +72,54 @@ fun PeriodicTopAppBar() {
 }
 
 @Composable
-fun TodoList(todoItems: List<TodoItem>, modifier: Modifier = Modifier) {
+fun TodoList(
+    modifier: Modifier = Modifier,
+    todoListViewModel: TodoListViewModel = TodoListViewModel()
+) {
+    TodoList(
+        todoListViewModel.todoItems,
+        todoListViewModel::updateItemChecked,
+        modifier
+    )
+}
+
+@Composable
+fun TodoList(
+    todoItems: List<TodoItem>,
+    onItemCheckedUpdate: (UUID, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumn(modifier = modifier) {
         items(todoItems) { todoItem ->
-            CheckableTodoItem(todoItem)
+            CheckableTodoItem(
+                todoItem,
+                onItemCheckedUpdate = {
+                    onItemCheckedUpdate.invoke(todoItem.id, it)
+                }
+            )
         }
     }
 }
 
 @Composable
-fun CheckableTodoItem(todoItem: TodoItem, modifier: Modifier = Modifier) {
-    val (checkedState, onStateChange) = remember { mutableStateOf(false) }
+fun CheckableTodoItem(
+    todoItem: TodoItem,
+    onItemCheckedUpdate: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier
             .fillMaxWidth()
             .height(56.dp)
             .toggleable(
-                value = checkedState,
-                onValueChange = { onStateChange(!checkedState) },
+                value = todoItem.checked,
+                onValueChange = onItemCheckedUpdate::invoke,
                 role = Role.Checkbox
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-            checked = checkedState,
+            checked = todoItem.checked,
             onCheckedChange = null,
             modifier = modifier.padding(horizontal = 16.dp)
         )
@@ -115,13 +134,6 @@ fun CheckableTodoItem(todoItem: TodoItem, modifier: Modifier = Modifier) {
 @Composable
 fun TodoListPreview(modifier: Modifier = Modifier) {
     PeriodicTheme {
-        TodoList(
-            listOf(
-                TodoItem("Item 1"),
-                TodoItem("Item 2"),
-                TodoItem("Item 4")
-            ),
-            modifier
-        )
+        TodoList()
     }
 }
