@@ -1,0 +1,41 @@
+package com.emathias.periodic.ui.todolist
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.emathias.periodic.db.dao.TodoItemDao
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
+
+    private val _state = MutableStateFlow(TodoListState())
+    private val _todoItems =
+        dao.getAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    val state = combine(_state, _todoItems) { state, todoItems ->
+        state.copy(todoItems = todoItems)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TodoListState())
+
+    fun onEvent(event: TodoListEvent) {
+        when (event) {
+            is TodoListEvent.Check -> {
+                viewModelScope.launch {
+                    dao.updateItems(event.todoItem.copy(checked = true))
+                }
+            }
+
+            is TodoListEvent.Uncheck -> {
+                viewModelScope.launch {
+                    dao.updateItems(event.todoItem.copy(checked = false))
+                }
+            }
+
+            is TodoListEvent.AddItem -> viewModelScope.launch {
+                dao.insertAll(event.todoItem)
+            }
+        }
+    }
+}
