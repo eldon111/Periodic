@@ -15,6 +15,6 @@ interface TodoItemDao {
     @Update
     suspend fun updateItems(vararg todoItems: TodoItem)
 
-    @Query("SELECT * FROM todoitem")
+    @Query("SELECT * FROM TodoItem")
     fun getAll(): Flow<List<TodoItem>>
 }
