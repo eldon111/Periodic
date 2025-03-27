@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TodoItemDao {
     @Insert
-    suspend fun insertAll(vararg todoItems: TodoItem)
+    suspend fun insert(todoItem: TodoItem): Long
 
     @Update
-    suspend fun updateItems(vararg todoItems: TodoItem)
+    suspend fun update(todoItem: TodoItem)
 
     @Query("SELECT * FROM TodoItem")
     fun getAll(): Flow<List<TodoItem>>

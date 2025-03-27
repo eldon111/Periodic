@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ScheduledItemDao {
     @Insert
-    suspend fun insertAll(vararg todoItems: ScheduledItem)
+    suspend fun insert(scheduledItem: ScheduledItem): Long
 
     @Update
-    suspend fun updateItems(vararg todoItems: ScheduledItem)
+    suspend fun update(scheduledItem: ScheduledItem)
 
     @Query("SELECT * FROM ScheduledItem")
     fun getAll(): Flow<List<ScheduledItem>>

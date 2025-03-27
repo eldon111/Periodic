@@ -23,18 +23,18 @@ class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
         when (event) {
             is TodoListEvent.Check -> {
                 viewModelScope.launch {
-                    dao.updateItems(event.todoItem.copy(checked = true))
+                    dao.update(event.todoItem.copy(checked = true))
                 }
             }
 
             is TodoListEvent.Uncheck -> {
                 viewModelScope.launch {
-                    dao.updateItems(event.todoItem.copy(checked = false))
+                    dao.update(event.todoItem.copy(checked = false))
                 }
             }
 
             is TodoListEvent.AddItem -> viewModelScope.launch {
-                dao.insertAll(event.todoItem)
+                dao.insert(event.todoItem)
             }
         }
     }
