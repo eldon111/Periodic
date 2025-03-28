@@ -6,8 +6,10 @@ import androidx.room.Query
 import androidx.room.Update
 import com.emathias.periodic.db.entities.TodoItem
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Singleton
 
 @Dao
+@Singleton
 interface TodoItemDao {
     @Insert
     suspend fun insert(todoItem: TodoItem): Long

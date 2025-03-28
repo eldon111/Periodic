@@ -5,8 +5,10 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.emathias.periodic.db.entities.ScheduledItemHistory
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Singleton
 
 @Dao
+@Singleton
 interface ScheduledItemHistoryDao {
     @Insert
     suspend fun insert(historyItem: ScheduledItemHistory): Long

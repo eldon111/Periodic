@@ -10,8 +10,11 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onEach
 import java.time.Instant
 import java.time.ZoneOffset
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ScheduledItemProcessor(
+@Singleton
+class ScheduledItemProcessor @Inject constructor(
     val scheduledItemDao: ScheduledItemDao,
     val scheduledItemHistoryDao: ScheduledItemHistoryDao,
     val todoItemDao: TodoItemDao,
@@ -20,6 +23,7 @@ class ScheduledItemProcessor(
     fun processAll(since: Instant) {
         scheduledItemDao.getAll().onEach {
             it.onEach {
+                println("Processing scheduled item '${it.description}'")
                 process(it, since)
             }
         }
