@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emathias.periodic.db.entities.TodoItem
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
+import com.emathias.periodic.ui.todolist.createdialog.TodoItemCreationDialog
 import kotlin.random.Random
 
 @Composable
@@ -36,7 +37,7 @@ fun TodoListScreen(
         topBar = { PeriodicTopAppBar() },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { Unit } // TODO
+                onClick = { onEvent(TodoListEvent.ShowDialog) }
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -53,6 +54,9 @@ fun TodoListScreen(
             onEvent,
             modifier = Modifier.padding(innerPadding)
         )
+        if (state.showingDialog) {
+            TodoItemCreationDialog(onEvent)
+        }
     }
 }
 
@@ -112,7 +116,6 @@ fun TodoListScreenPreview() {
     TodoListScreen(
         TodoListState(
             (1..30).map { TodoItem(Random.nextLong(), "Item $it") }
-        ),
-        { e -> Unit }
-    )
+        )
+    ) { e -> }
 }

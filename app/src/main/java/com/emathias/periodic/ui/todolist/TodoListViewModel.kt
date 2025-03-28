@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
@@ -32,6 +33,10 @@ class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
                     dao.update(event.todoItem.copy(checked = false))
                 }
             }
+
+            TodoListEvent.ShowDialog -> _state.update { it.copy(showingDialog = true) }
+
+            TodoListEvent.HideDialog -> _state.update { it.copy(showingDialog = false) }
 
             is TodoListEvent.AddItem -> viewModelScope.launch {
                 dao.insert(event.todoItem)
