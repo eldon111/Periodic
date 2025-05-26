@@ -18,6 +18,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Build config fields for AWS configuration
+        buildConfigField("String", "AWS_REGION", "\"us-east-4\"")
+        buildConfigField("String", "AWS_ACCESS_KEY_ID", "\"AKIA37NFBG223R7P62ZK\"")
+        buildConfigField(
+            "String",
+            "AWS_SECRET_ACCESS_KEY",
+            "\"z3joIQbwQ7+idsfs0gZazCT9J40fk5JVbmkDuBdQ\""
+        )
     }
 
     buildTypes {
@@ -38,6 +47,22 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/ASL2.0"
+            excludes += "META-INF/LGPL2.1"
+            excludes += "META-INF/AL2.0"
+            excludes += "META-INF/LGPL2.1"
+        }
     }
 }
 
@@ -60,6 +85,26 @@ dependencies {
     implementation(libs.work)
     implementation(libs.hilt)
     implementation(libs.androidx.hilt.work)
+
+    // AWS Bedrock dependencies
+    implementation(libs.aws.bedrock.runtime) {
+        exclude(group = "org.apache.httpcomponents", module = "httpclient")
+        exclude(group = "org.apache.httpcomponents", module = "httpcore")
+        exclude(group = "commons-logging", module = "commons-logging")
+    }
+    implementation(libs.aws.core) {
+        exclude(group = "org.apache.httpcomponents", module = "httpclient")
+        exclude(group = "org.apache.httpcomponents", module = "httpcore")
+        exclude(group = "commons-logging", module = "commons-logging")
+    }
+    implementation(libs.aws.auth) {
+        exclude(group = "org.apache.httpcomponents", module = "httpclient")
+        exclude(group = "org.apache.httpcomponents", module = "httpcore")
+        exclude(group = "commons-logging", module = "commons-logging")
+    }
+    implementation(libs.aws.url.connection.client)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
     testImplementation(libs.junit)
 

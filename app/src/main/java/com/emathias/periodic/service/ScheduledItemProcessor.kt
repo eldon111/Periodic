@@ -58,7 +58,11 @@ class ScheduledItemProcessor @Inject constructor(
             ?.let { maxOf(since, it) }
             ?: since
 
-        val nextProcessTime = item.schedule.next(cutoff.atZone(ZoneOffset.UTC)).toInstant()
+        val nextProcessTime = item.schedule?.next(cutoff.atZone(ZoneOffset.UTC))?.toInstant()
+
+        if (nextProcessTime == null) {
+            return null
+        }
 
         if (item.expiration?.isBefore(nextProcessTime) == true) {
             return null

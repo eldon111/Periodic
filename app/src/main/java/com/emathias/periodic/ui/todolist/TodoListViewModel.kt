@@ -3,6 +3,7 @@ package com.emathias.periodic.ui.todolist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.db.dao.TodoItemDao
+import com.emathias.periodic.service.BedrockAiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -10,7 +11,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
+class TodoListViewModel(
+    private val dao: TodoItemDao,
+    private val aiService: BedrockAiService,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(TodoListState())
     private val _todoItems =
@@ -34,12 +38,20 @@ class TodoListViewModel(private val dao: TodoItemDao) : ViewModel() {
                 }
             }
 
-            TodoListEvent.ShowDialog -> _state.update { it.copy(showingDialog = true) }
+            TodoListEvent.ShowAddDialog -> _state.update { it.copy(showingAddDialog = true) }
 
-            TodoListEvent.HideDialog -> _state.update { it.copy(showingDialog = false) }
+            TodoListEvent.HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
+
+            TodoListEvent.ShowConfirmDialog -> _state.update { it.copy(showingConfirmDialog = true) }
+
+            TodoListEvent.HideConfirmDialog -> _state.update { it.copy(showingConfirmDialog = false) }
 
             is TodoListEvent.AddItem -> viewModelScope.launch {
                 dao.insert(event.todoItem)
+            }
+
+            is TodoListEvent.GenerateItem -> viewModelScope.launch {
+                aiService.generateTextWithNova(event.prompt)
             }
         }
     }

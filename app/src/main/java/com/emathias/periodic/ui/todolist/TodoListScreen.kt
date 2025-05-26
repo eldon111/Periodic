@@ -31,13 +31,13 @@ import kotlin.random.Random
 @Composable
 fun TodoListScreen(
     state: TodoListState,
-    onEvent: (TodoListEvent) -> Unit
+    onEvent: (TodoListEvent) -> Unit,
 ) {
     Scaffold(
         topBar = { PeriodicTopAppBar() },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onEvent(TodoListEvent.ShowDialog) }
+                onClick = { onEvent(TodoListEvent.ShowAddDialog) }
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -54,7 +54,7 @@ fun TodoListScreen(
             onEvent,
             modifier = Modifier.padding(innerPadding)
         )
-        if (state.showingDialog) {
+        if (state.showingAddDialog) {
             TodoItemCreationDialog(onEvent)
         }
     }
@@ -64,7 +64,7 @@ fun TodoListScreen(
 fun TodoList(
     todoItems: List<TodoItem>,
     onEvent: (TodoListEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
         items(todoItems) { todoItem ->
@@ -80,7 +80,7 @@ fun TodoList(
 fun CheckableTodoItem(
     todoItem: TodoItem,
     onEvent: (TodoListEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier
