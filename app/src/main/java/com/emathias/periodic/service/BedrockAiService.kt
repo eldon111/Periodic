@@ -3,6 +3,7 @@ package com.emathias.periodic.service
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
@@ -27,7 +28,10 @@ Only take into account the most recent user message when building context.
 
 The user will request an item to be generated and may supply details like date and time, whether it repeats, at what interval, etc.
 
-Your response should only be a single json object, with no other commentary or text of any kind.
+Your response should only be a single json object, with no other output of any kind.
+DO NOT wrap the JSON in markdown code blocks, quotes, or any other formatting.
+DO NOT include ```json, ```, or any other markdown syntax.
+ONLY return the raw JSON object itself.
 
 The following is a template of the format required for the json object:
 {
@@ -51,29 +55,23 @@ The following is a template of the format required for the json object:
         modelId: String = AMAZON_NOVA_LITE,
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
+            // For Nova Lite, we need to combine system prompt and user prompt
+            // as it doesn't support system role
+            val combinedPrompt = "$SYSTEM_PROMPT\n\nUser input: $prompt"
+
             val requestBody = JSONObject().apply {
                 put("schemaVersion", "messages-v1")
-                put(
-                    "messages", arrayOf(
-                        JSONObject().apply {
-                            put("role", "system")
-                            put(
-                                "content", arrayOf(
-                                    JSONObject().apply {
-                                        put("text", SYSTEM_PROMPT)
-                                    }
-                                ))
-                        },
-                        JSONObject().apply {
-                            put("role", "user")
-                            put(
-                                "content", arrayOf(
-                                    JSONObject().apply {
-                                        put("text", prompt)
-                                    }
-                                ))
-                        }
-                    ))
+                put("messages", JSONArray().apply {
+                    // Single user message with combined prompts
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("content", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("text", combinedPrompt)
+                            })
+                        })
+                    })
+                })
                 put("inferenceConfig", JSONObject().apply {
                     put("maxTokens", maxTokens)
                     put("temperature", temperature)
@@ -84,10 +82,14 @@ The following is a template of the format required for the json object:
 
             val response = invokeModel(modelId, requestBody.toString())
             val responseBody = JSONObject(response)
-            val output = responseBody.getJSONArray("output")
-            val message = output.getJSONObject(0)
+            val output = responseBody.getJSONObject("output")
+            val message = output.getJSONObject("message")
             val content = message.getJSONArray("content")
             val text = content.getJSONObject(0).getString("text")
+            Log.d(TAG, "Generated text: $text")
+
+            val json = JSONObject(text)
+            Log.d(TAG, "Generated json: $json")
 
             Result.success(text.trim())
         } catch (e: Exception) {
