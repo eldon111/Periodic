@@ -52,6 +52,7 @@ class TodoListViewModel(
 
             is TodoListEvent.GenerateItem -> viewModelScope.launch {
                 aiService.generateTextWithNova(event.prompt)
+                onEvent(TodoListEvent.HideAddDialog)
             }
         }
     }

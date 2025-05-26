@@ -12,16 +12,23 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.emathias.periodic.ui.todolist.TodoListEvent
+import com.emathias.periodic.ui.todolist.TodoListEvent.GenerateItem
 import com.emathias.periodic.ui.todolist.TodoListEvent.HideAddDialog
 
 @Composable
 fun TodoItemCreationDialog(onEvent: (TodoListEvent) -> Unit) {
+    var prompt by remember { mutableStateOf("") }
+
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
             modifier = Modifier
@@ -40,16 +47,16 @@ fun TodoItemCreationDialog(onEvent: (TodoListEvent) -> Unit) {
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
-                    value = "",
+                    value = prompt,
                     singleLine = false,
-                    onValueChange = { },
+                    onValueChange = { prompt = it },
                     label = { Text("Item description") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                 )
                 Button(
-                    onClick = { onEvent(HideAddDialog) },
+                    onClick = { onEvent(GenerateItem(prompt)) },
                     modifier = Modifier.padding(16.dp),
                 ) {
                     Text("Create")
