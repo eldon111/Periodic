@@ -1,6 +1,9 @@
 package com.emathias.periodic.service
 
+import android.content.Context
 import android.util.Log
+import com.emathias.periodic.R
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -9,38 +12,38 @@ import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class BedrockAiService @Inject constructor(
     private val bedrockClient: BedrockRuntimeClient,
+    @ApplicationContext private val context: Context,
 ) {
     companion object {
         private const val TAG = "BedrockAiService"
 
         // Available model IDs
         const val AMAZON_NOVA_LITE = "amazon.nova-lite-v1:0"
-        const val SYSTEM_PROMPT = """
-Your role is to generate a json object representing a scheduled item based on a user request.
+    }
 
-Only take into account the most recent user message when building context.
-
-The user will request an item to be generated and may supply details like date and time, whether it repeats, at what interval, etc.
-
-Your response should only be a single json object, with no other output of any kind.
-DO NOT wrap the JSON in markdown code blocks, quotes, or any other formatting.
-DO NOT include ```json, ```, or any other markdown syntax.
-ONLY return the raw JSON object itself.
-
-The following is a template of the format required for the json object:
-{
-    "title":"<user-requested title or generated title based on description>",
-    "firstOccurrence":<ISO datetime in UTC with the format yyyy-MM-ddTHH:mm:ssZ, taking the user's timezone into account>,
-    "repeats":<boolean, defaults to false>,
-    "interval":<you can leave this property out entirely if 'repeats' is false, otherwise ISO 8601 duration (format: P(n)Y(n)M(n)DT(n)H(n)M(n)S)>
-}
-"""
+    /**
+     * Load system prompt from raw resource file
+     */
+    private fun loadSystemPrompt(): String {
+        return try {
+            val inputStream =
+                context.resources.openRawResource(R.raw.new_scheduled_item_system_prompt)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val content = reader.use { it.readText() }
+            content
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading system prompt from resource", e)
+            // Fallback to a basic prompt if resource loading fails
+            "Generate a JSON object for a scheduled item based on user input."
+        }
     }
 
     /**
@@ -57,7 +60,8 @@ The following is a template of the format required for the json object:
         try {
             // For Nova Lite, we need to combine system prompt and user prompt
             // as it doesn't support system role
-            val combinedPrompt = "$SYSTEM_PROMPT\n\nUser input: $prompt"
+            val systemPrompt = loadSystemPrompt()
+            val combinedPrompt = "$systemPrompt\n\nUser input: $prompt"
 
             val requestBody = JSONObject().apply {
                 put("schemaVersion", "messages-v1")
