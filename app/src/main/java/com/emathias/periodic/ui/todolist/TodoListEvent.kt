@@ -1,5 +1,6 @@
 package com.emathias.periodic.ui.todolist
 
+import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.db.entities.TodoItem
 
 sealed interface TodoListEvent {
@@ -9,6 +10,7 @@ sealed interface TodoListEvent {
     object HideAddDialog : TodoListEvent
     data class AddItem(val todoItem: TodoItem) : TodoListEvent
     data class GenerateItem(val prompt: String) : TodoListEvent
-    object ShowConfirmDialog : TodoListEvent
+    data class ShowConfirmDialog(val scheduledItem: ScheduledItem) : TodoListEvent
     object HideConfirmDialog : TodoListEvent
+    data class ConfirmScheduledItem(val scheduledItem: ScheduledItem) : TodoListEvent
 }

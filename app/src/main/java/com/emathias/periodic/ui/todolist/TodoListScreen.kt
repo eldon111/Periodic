@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.emathias.periodic.db.entities.TodoItem
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
+import com.emathias.periodic.ui.todolist.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.todolist.createdialog.TodoItemCreationDialog
 import kotlin.random.Random
 
@@ -56,6 +57,8 @@ fun TodoListScreen(
         )
         if (state.showingAddDialog) {
             TodoItemCreationDialog(onEvent)
+        } else if (state.showingConfirmDialog) {
+            ScheduledItemConfirmationDialog(state, onEvent)
         }
     }
 }

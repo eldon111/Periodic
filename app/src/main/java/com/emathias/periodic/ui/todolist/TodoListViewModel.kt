@@ -2,8 +2,18 @@ package com.emathias.periodic.ui.todolist
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.dao.TodoItemDao
-import com.emathias.periodic.service.BedrockAiService
+import com.emathias.periodic.service.AiEnhancedTodoService
+import com.emathias.periodic.ui.todolist.TodoListEvent.AddItem
+import com.emathias.periodic.ui.todolist.TodoListEvent.Check
+import com.emathias.periodic.ui.todolist.TodoListEvent.ConfirmScheduledItem
+import com.emathias.periodic.ui.todolist.TodoListEvent.GenerateItem
+import com.emathias.periodic.ui.todolist.TodoListEvent.HideAddDialog
+import com.emathias.periodic.ui.todolist.TodoListEvent.HideConfirmDialog
+import com.emathias.periodic.ui.todolist.TodoListEvent.ShowAddDialog
+import com.emathias.periodic.ui.todolist.TodoListEvent.ShowConfirmDialog
+import com.emathias.periodic.ui.todolist.TodoListEvent.Uncheck
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -12,13 +22,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TodoListViewModel(
-    private val dao: TodoItemDao,
-    private val aiService: BedrockAiService,
+    private val todoItemDao: TodoItemDao,
+    private val scheduledItemDao: ScheduledItemDao,
+    private val aiService: AiEnhancedTodoService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TodoListState())
     private val _todoItems =
-        dao.getAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        todoItemDao.getAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val state = combine(_state, _todoItems) { state, todoItems ->
         state.copy(todoItems = todoItems)
@@ -26,33 +37,48 @@ class TodoListViewModel(
 
     fun onEvent(event: TodoListEvent) {
         when (event) {
-            is TodoListEvent.Check -> {
+            is Check -> {
                 viewModelScope.launch {
-                    dao.update(event.todoItem.copy(checked = true))
+                    todoItemDao.update(event.todoItem.copy(checked = true))
                 }
             }
 
-            is TodoListEvent.Uncheck -> {
+            is Uncheck -> {
                 viewModelScope.launch {
-                    dao.update(event.todoItem.copy(checked = false))
+                    todoItemDao.update(event.todoItem.copy(checked = false))
                 }
             }
 
-            TodoListEvent.ShowAddDialog -> _state.update { it.copy(showingAddDialog = true) }
+            ShowAddDialog -> _state.update { it.copy(showingAddDialog = true) }
 
-            TodoListEvent.HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
+            HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
 
-            TodoListEvent.ShowConfirmDialog -> _state.update { it.copy(showingConfirmDialog = true) }
-
-            TodoListEvent.HideConfirmDialog -> _state.update { it.copy(showingConfirmDialog = false) }
-
-            is TodoListEvent.AddItem -> viewModelScope.launch {
-                dao.insert(event.todoItem)
+            is ShowConfirmDialog -> _state.update {
+                it.copy(
+                    showingConfirmDialog = true,
+                    pendingScheduledItem = event.scheduledItem,
+                )
             }
 
-            is TodoListEvent.GenerateItem -> viewModelScope.launch {
-                aiService.generateTextWithNova(event.prompt)
-                onEvent(TodoListEvent.HideAddDialog)
+            HideConfirmDialog -> _state.update {
+                it.copy(
+                    showingConfirmDialog = false,
+                    pendingScheduledItem = null,
+                )
+            }
+
+            is AddItem -> viewModelScope.launch {
+                todoItemDao.insert(event.todoItem)
+            }
+
+            is GenerateItem -> viewModelScope.launch {
+                val scheduledItem = aiService.generateScheduledItem(event.prompt).getOrThrow()
+                onEvent(HideAddDialog)
+                onEvent(ShowConfirmDialog(scheduledItem))
+            }
+
+            is ConfirmScheduledItem -> viewModelScope.launch {
+                scheduledItemDao.insert(event.scheduledItem)
             }
         }
     }

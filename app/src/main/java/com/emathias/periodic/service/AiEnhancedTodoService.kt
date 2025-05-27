@@ -1,7 +1,17 @@
 package com.emathias.periodic.service
 
+import android.content.Context
 import android.util.Log
+import com.emathias.periodic.R
 import com.emathias.periodic.config.AwsCredentialManager
+import com.emathias.periodic.db.entities.ScheduledItem
+import dagger.hilt.android.qualifiers.ApplicationContext
+import org.json.JSONObject
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.time.Duration
+import java.time.OffsetDateTime
+import java.time.Period
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -9,6 +19,7 @@ import javax.inject.Singleton
 class AiEnhancedTodoService @Inject constructor(
     private val bedrockService: BedrockAiService,
     private val credentialManager: AwsCredentialManager,
+    @ApplicationContext private val context: Context,
 ) {
     companion object {
         private const val TAG = "AiEnhancedTodoService"
@@ -17,123 +28,60 @@ class AiEnhancedTodoService @Inject constructor(
     /**
      * Generate smart suggestions for todo items based on user input
      */
-    suspend fun generateTodoSuggestions(userInput: String): Result<List<String>> {
+    suspend fun generateScheduledItem(userInput: String): Result<ScheduledItem> {
         if (!credentialManager.areCredentialsConfigured()) {
             return Result.failure(Exception("AWS credentials not configured"))
         }
 
         return try {
             val response = bedrockService.generateTextWithNova(
-                prompt = userInput.trimIndent(),
+                systemPrompt = loadScheduledItemSystemPrompt(),
+                prompt = userInput,
                 maxTokens = 300,
                 temperature = 0.7f
             )
 
-            if (response.isSuccess) {
-                val suggestions = response.getOrNull()
-                    ?.split("\n")
-                    ?.map { it.trim() }
-                    ?.filter { it.isNotBlank() && !it.startsWith("-") && !it.matches(Regex("^\\d+\\..*")) }
-                    ?: emptyList()
+            return response
+                .map { JSONObject(it) }
+                .map { json ->
+                    ScheduledItem(
+                        title = json.getString("title"),
+                        description = "",
+                        firstOccurrence = OffsetDateTime.parse(json.getString("firstOccurrence"))
+                            .toInstant(),
+                        repeats = json.getBoolean("repeats"),
+                        intervalInMinutes = json.takeUnless { it.isNull("interval") }?.let {
+                            parseIntervalInMinutes(json.getString("interval"))
+                        },
+                        expiration = json.takeUnless { it.isNull("expiration") }?.let {
+                            OffsetDateTime.parse(json.getString("expiration")).toInstant()
+                        },
+                    )
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error generating scheduled item", e)
+            Result.failure(e)
+        }
+    }
 
-                Log.d(TAG, "Generated ${suggestions.size} todo suggestions")
-                Result.success(suggestions)
-            } else {
-                Result.failure(response.exceptionOrNull() ?: Exception("Unknown error"))
+    private fun parseIntervalInMinutes(intervalString: String): Long {
+        val parts = intervalString.split("T")
+        println(parts)
+        if (parts.size == 1) {
+            return try {
+//                println(Period.parse(parts[0]).days * 24L * 60L)
+//                println(Period.parse(parts[0]).years)
+//                println(Period.parse(parts[0]).months)
+                Period.parse(parts[0]).days * 24L * 60L
+            } catch (e: Exception) {
+                println("Failed to parse period: $e")
+                println(Duration.parse(parts[0]).toMinutes())
+                Duration.parse(parts[0]).toMinutes()
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error generating todo suggestions", e)
-            Result.failure(e)
         }
-    }
-
-    /**
-     * Generate smart suggestions for todo items using Amazon Nova Lite
-     */
-    suspend fun generateTodoSuggestionsWithNova(userInput: String): Result<List<String>> {
-        if (!credentialManager.areCredentialsConfigured()) {
-            return Result.failure(Exception("AWS credentials not configured"))
-        }
-
-        return try {
-            val response = bedrockService.generateTextWithNova(
-                prompt = userInput.trimIndent(),
-                maxTokens = 300,
-                temperature = 0.7f
-            )
-
-            if (response.isSuccess) {
-                val suggestions = response.getOrNull()
-                    ?.split("\n")
-                    ?.map { it.trim() }
-                    ?.filter { it.isNotBlank() && !it.startsWith("-") && !it.matches(Regex("^\\d+\\..*")) }
-                    ?: emptyList()
-
-                Log.d(TAG, "Generated ${suggestions.size} todo suggestions with Nova")
-                Result.success(suggestions)
-            } else {
-                Result.failure(response.exceptionOrNull() ?: Exception("Unknown error"))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error generating todo suggestions with Nova", e)
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Enhance a todo item description with AI
-     */
-    suspend fun enhanceTodoDescription(basicDescription: String): Result<String> {
-        if (!credentialManager.areCredentialsConfigured()) {
-            return Result.failure(Exception("AWS credentials not configured"))
-        }
-
-        return try {
-            bedrockService.generateTextWithNova(
-                prompt = basicDescription.trimIndent(),
-                maxTokens = 150,
-                temperature = 0.5f
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Error enhancing todo description", e)
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Generate a smart schedule suggestion for todo items
-     */
-    suspend fun generateScheduleSuggestion(todoItems: List<String>): Result<String> {
-        if (!credentialManager.areCredentialsConfigured()) {
-            return Result.failure(Exception("AWS credentials not configured"))
-        }
-
-        val itemsList = todoItems.joinToString("\n") { "- $it" }
-
-        val prompt = """
-            Given these todo items, suggest an optimal daily schedule:
-
-            $itemsList
-
-            Please provide:
-            - A suggested order for completing these tasks
-            - Estimated time for each task
-            - Best time of day to do each task
-            - Any dependencies between tasks
-
-            Keep the response concise and practical.
-        """.trimIndent()
-
-        return try {
-            bedrockService.generateTextWithNova(
-                prompt = prompt,
-                maxTokens = 400,
-                temperature = 0.6f
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Error generating schedule suggestion", e)
-            Result.failure(e)
-        }
+        val period = Period.parse(parts[0])
+        val duration = Duration.parse(parts[1])
+        return period.days * 24L * 60L + duration.toMinutes()
     }
 
     /**
@@ -141,5 +89,22 @@ class AiEnhancedTodoService @Inject constructor(
      */
     fun isAiAvailable(): Boolean {
         return credentialManager.areCredentialsConfigured()
+    }
+
+    /**
+     * Load system prompt from raw resource file
+     */
+    private fun loadScheduledItemSystemPrompt(): String {
+        return try {
+            val inputStream =
+                context.resources.openRawResource(R.raw.new_scheduled_item_system_prompt)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val content = reader.use { it.readText() }
+            content
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading system prompt from resource", e)
+            // Fallback to a basic prompt if resource loading fails
+            "Generate a JSON object for a scheduled item based on user input."
+        }
     }
 }

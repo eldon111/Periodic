@@ -1,9 +1,6 @@
 package com.emathias.periodic.service
 
-import android.content.Context
 import android.util.Log
-import com.emathias.periodic.R
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -12,15 +9,12 @@ import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelResponse
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class BedrockAiService @Inject constructor(
     private val bedrockClient: BedrockRuntimeClient,
-    @ApplicationContext private val context: Context,
 ) {
     companion object {
         private const val TAG = "BedrockAiService"
@@ -30,26 +24,10 @@ class BedrockAiService @Inject constructor(
     }
 
     /**
-     * Load system prompt from raw resource file
-     */
-    private fun loadSystemPrompt(): String {
-        return try {
-            val inputStream =
-                context.resources.openRawResource(R.raw.new_scheduled_item_system_prompt)
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val content = reader.use { it.readText() }
-            content
-        } catch (e: Exception) {
-            Log.e(TAG, "Error loading system prompt from resource", e)
-            // Fallback to a basic prompt if resource loading fails
-            "Generate a JSON object for a scheduled item based on user input."
-        }
-    }
-
-    /**
      * Generate text using Amazon Nova Lite model
      */
     suspend fun generateTextWithNova(
+        systemPrompt: String,
         prompt: String,
         maxTokens: Int = 512,
         temperature: Float = 0.0f,
@@ -60,7 +38,6 @@ class BedrockAiService @Inject constructor(
         try {
             // For Nova Lite, we need to combine system prompt and user prompt
             // as it doesn't support system role
-            val systemPrompt = loadSystemPrompt()
             val combinedPrompt = "$systemPrompt\n\nUser input: $prompt"
 
             val requestBody = JSONObject().apply {
@@ -123,18 +100,4 @@ class BedrockAiService @Inject constructor(
             Log.d(TAG, "Response: $responseBody")
             return@withContext responseBody
         }
-
-    /**
-     * Test connection to Bedrock service
-     */
-    suspend fun testConnection(): Result<Boolean> = withContext(Dispatchers.IO) {
-        try {
-            // Try a simple request to test the connection
-            generateTextWithNova("Hello", maxTokens = 10)
-            Result.success(true)
-        } catch (e: Exception) {
-            Log.e(TAG, "Connection test failed", e)
-            Result.failure(e)
-        }
-    }
 }
