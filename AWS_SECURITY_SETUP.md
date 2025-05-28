@@ -19,18 +19,18 @@ Create an IAM user specifically for this app with only the required permissions:
 
 ```json
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "bedrock:InvokeModel"
-            ],
-            "Resource": [
-                "arn:aws:bedrock:*:*:model/amazon.nova-lite-v1:0"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*:*:model/amazon.nova-lite-v1:0"
+      ]
+    }
+  ]
 }
 ```
 
@@ -54,7 +54,7 @@ Create an IAM user specifically for this app with only the required permissions:
 1. Copy `local.properties.template` to `local.properties`
 2. Fill in your AWS credentials:
    ```properties
-   aws.region=us-east-4
+   aws.region=us-east-1
    aws.access_key_id=YOUR_ACCESS_KEY_ID
    aws.secret_access_key=YOUR_SECRET_ACCESS_KEY
    ```
