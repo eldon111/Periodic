@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,13 +22,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Build config fields for AWS configuration
-        buildConfigField("String", "AWS_REGION", "\"us-east-4\"")
-        buildConfigField("String", "AWS_ACCESS_KEY_ID", "\"AKIA37NFBG223R7P62ZK\"")
-        buildConfigField(
-            "String",
-            "AWS_SECRET_ACCESS_KEY",
-            "\"z3joIQbwQ7+idsfs0gZazCT9J40fk5JVbmkDuBdQ\""
-        )
+        // Read AWS credentials from local.properties (which is gitignored)
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        // AWS configuration with fallback to empty strings (will cause runtime error if not set)
+        val awsRegion = localProperties.getProperty("aws.region", "")
+        val awsAccessKeyId = localProperties.getProperty("aws.access_key_id", "")
+        val awsSecretAccessKey = localProperties.getProperty("aws.secret_access_key", "")
+
+        buildConfigField("String", "AWS_REGION", "\"$awsRegion\"")
+        buildConfigField("String", "AWS_ACCESS_KEY_ID", "\"$awsAccessKeyId\"")
+        buildConfigField("String", "AWS_SECRET_ACCESS_KEY", "\"$awsSecretAccessKey\"")
     }
 
     buildTypes {

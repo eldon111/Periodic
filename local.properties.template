@@ -1,0 +1,26 @@
+# Template for local.properties
+# Copy this file to local.properties and fill in your actual values
+# local.properties is gitignored and will not be committed to version control
+
+# Android SDK location (automatically set by Android Studio)
+sdk.dir=YOUR_ANDROID_SDK_PATH
+
+# AWS Configuration
+# Get these values from your AWS IAM console
+# Make sure your IAM user has permissions for Amazon Bedrock
+aws.region=us-east-1
+aws.access_key_id=YOUR_AWS_ACCESS_KEY_ID
+aws.secret_access_key=YOUR_AWS_SECRET_ACCESS_KEY
+
+# Instructions:
+# 1. Copy this file to local.properties
+# 2. Replace YOUR_AWS_ACCESS_KEY_ID with your actual AWS access key ID
+# 3. Replace YOUR_AWS_SECRET_ACCESS_KEY with your actual AWS secret access key
+# 4. Optionally change the aws.region if you want to use a different region
+# 5. The sdk.dir will be automatically set by Android Studio
+
+# Security Notes:
+# - Never commit local.properties to version control
+# - Never share your AWS credentials
+# - Consider using IAM roles with minimal permissions
+# - Regularly rotate your AWS access keys

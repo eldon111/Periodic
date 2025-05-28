@@ -16,3 +16,12 @@ local.properties
 /.idea/AugmentWebviewStateStore.xml
 /.idea/inspectionProfiles
 /.kotlin
+
+# Security: Additional files that might contain sensitive information
+*.key
+*.pem
+*.p12
+*.jks
+keystore.properties
+secrets.properties
+aws-credentials.properties
