@@ -1,4 +1,4 @@
-package com.emathias.periodic.ui.todolist.createdialog
+package com.emathias.periodic.ui.scheduleditem.createdialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,17 +25,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.db.entities.TodoItem
-import com.emathias.periodic.ui.todolist.TodoListEvent
-import com.emathias.periodic.ui.todolist.TodoListEvent.ConfirmScheduledItem
-import com.emathias.periodic.ui.todolist.TodoListEvent.HideConfirmDialog
-import com.emathias.periodic.ui.todolist.TodoListState
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemState
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.random.Random
 
 @Composable
-fun ScheduledItemConfirmationDialog(state: TodoListState, onEvent: (TodoListEvent) -> Unit) {
+fun ScheduledItemConfirmationDialog(
+    state: ScheduledItemState,
+    onEvent: (ScheduledItemEvent) -> Unit,
+) {
     var pendingScheduledItem by remember {
         mutableStateOf(
             state.pendingScheduledItem ?: ScheduledItem(
@@ -168,8 +170,8 @@ fun ScheduledItemConfirmationDialog(state: TodoListState, onEvent: (TodoListEven
 @Composable
 fun ScheduledItemConfirmationDialogPreview() {
     ScheduledItemConfirmationDialog(
-        TodoListState(
-            (1..30).map { TodoItem(Random.nextLong(), "Item $it") }
+        ScheduledItemState(
+            (1..30).map { ScheduledItem(Random.nextLong(), "Item $it", "desc", Instant.now()) }
         )
     ) { f -> }
 }

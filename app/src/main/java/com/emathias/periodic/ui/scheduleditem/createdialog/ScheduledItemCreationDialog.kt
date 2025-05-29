@@ -1,4 +1,4 @@
-package com.emathias.periodic.ui.todolist.createdialog
+package com.emathias.periodic.ui.scheduleditem.createdialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,12 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.emathias.periodic.ui.todolist.TodoListEvent
-import com.emathias.periodic.ui.todolist.TodoListEvent.GenerateItem
-import com.emathias.periodic.ui.todolist.TodoListEvent.HideAddDialog
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 
 @Composable
-fun TodoItemCreationDialog(onEvent: (TodoListEvent) -> Unit) {
+fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var prompt by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
@@ -42,7 +42,7 @@ fun TodoItemCreationDialog(onEvent: (TodoListEvent) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "This will create a new item.",
+                    text = "This will create a new scheduled item.",
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
@@ -69,5 +69,5 @@ fun TodoItemCreationDialog(onEvent: (TodoListEvent) -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun TodoItemCreationDialogPreview() {
-    TodoItemCreationDialog() { f -> }
+    ScheduledItemCreationDialog() { f -> }
 }

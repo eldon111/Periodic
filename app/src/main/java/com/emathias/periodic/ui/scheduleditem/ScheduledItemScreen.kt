@@ -1,4 +1,4 @@
-package com.emathias.periodic.ui.todolist
+package com.emathias.periodic.ui.scheduleditem
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,22 +23,23 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.emathias.periodic.db.entities.TodoItem
+import com.emathias.periodic.db.entities.ScheduledItem
+import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
+import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
-import com.emathias.periodic.ui.todolist.createdialog.ScheduledItemConfirmationDialog
-import com.emathias.periodic.ui.todolist.createdialog.TodoItemCreationDialog
+import java.time.Instant
 import kotlin.random.Random
 
 @Composable
-fun TodoListScreen(
-    state: TodoListState,
-    onEvent: (TodoListEvent) -> Unit,
+fun ScheduledItemScreen(
+    state: ScheduledItemState,
+    onEvent: (ScheduledItemEvent) -> Unit,
 ) {
     Scaffold(
         topBar = { PeriodicTopAppBar() },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onEvent(TodoListEvent.ShowAddDialog) }
+                onClick = { onEvent(ScheduledItemEvent.ShowAddDialog) }
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -50,13 +51,13 @@ fun TodoListScreen(
             .fillMaxSize()
             .statusBarsPadding()
     ) { innerPadding ->
-        TodoList(
-            state.todoItems,
+        ScheduledItemList(
+            state.scheduledItems,
             onEvent,
             modifier = Modifier.padding(innerPadding)
         )
         if (state.showingAddDialog) {
-            TodoItemCreationDialog(onEvent)
+            ScheduledItemCreationDialog(onEvent)
         } else if (state.showingConfirmDialog) {
             ScheduledItemConfirmationDialog(state, onEvent)
         }
@@ -64,15 +65,15 @@ fun TodoListScreen(
 }
 
 @Composable
-fun TodoList(
-    todoItems: List<TodoItem>,
-    onEvent: (TodoListEvent) -> Unit,
+fun ScheduledItemList(
+    scheduledItems: List<ScheduledItem>,
+    onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
-        items(todoItems) { todoItem ->
+        items(scheduledItems) { scheduledItem ->
             CheckableTodoItem(
-                todoItem,
+                scheduledItem,
                 onEvent
             )
         }
@@ -81,8 +82,8 @@ fun TodoList(
 
 @Composable
 fun CheckableTodoItem(
-    todoItem: TodoItem,
-    onEvent: (TodoListEvent) -> Unit,
+    scheduledItem: ScheduledItem,
+    onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -90,24 +91,26 @@ fun CheckableTodoItem(
             .fillMaxWidth()
             .height(56.dp)
             .toggleable(
-                value = todoItem.checked,
+//                value = scheduledItem.checked,
+                value = false,
                 onValueChange = { checked ->
-                    when (checked) {
-                        true -> onEvent(TodoListEvent.Check(todoItem))
-                        false -> onEvent(TodoListEvent.Uncheck(todoItem))
-                    }
+//                    when (checked) {
+//                        true -> onEvent(ScheduledItemEvent.Check(scheduledItem))
+//                        false -> onEvent(ScheduledItemEvent.Uncheck(scheduledItem))
+//                    }
                 },
                 role = Role.Checkbox
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-            checked = todoItem.checked,
+//            checked = scheduledItem.checked,
+            checked = false,
             onCheckedChange = null,
             modifier = modifier.padding(horizontal = 16.dp)
         )
         Text(
-            text = todoItem.text,
+            text = scheduledItem.title,
             fontSize = 40.sp
         )
     }
@@ -115,10 +118,10 @@ fun CheckableTodoItem(
 
 @Preview(showBackground = true)
 @Composable
-fun TodoListScreenPreview() {
-    TodoListScreen(
-        TodoListState(
-            (1..30).map { TodoItem(Random.nextLong(), "Item $it") }
+fun ScheduledItemScreenPreview() {
+    ScheduledItemScreen(
+        ScheduledItemState(
+            (1..30).map { ScheduledItem(Random.nextLong(), "Item $it", "desc", Instant.now()) }
         )
     ) { e -> }
 }

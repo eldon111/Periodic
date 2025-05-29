@@ -1,10 +1,9 @@
-package com.emathias.periodic.ui.todolist
+package com.emathias.periodic.ui.scheduleditem
 
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.db.entities.TodoItem
 
-data class TodoListState(
-    val todoItems: List<TodoItem> = emptyList(),
+data class ScheduledItemState(
+    val scheduledItems: List<ScheduledItem> = emptyList(),
     val showingAddDialog: Boolean = false,
     val showingConfirmDialog: Boolean = false,
     val pendingScheduledItem: ScheduledItem? = null,
