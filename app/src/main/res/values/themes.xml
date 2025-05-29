@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Periodic" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Periodic" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Light status bar content (dark icons/text) -->
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- Navigation bar color -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- Light navigation bar content (dark icons) -->
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
 </resources>
