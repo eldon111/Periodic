@@ -34,9 +34,15 @@ import kotlin.random.Random
 fun ScheduledItemScreen(
     state: ScheduledItemState,
     onEvent: (ScheduledItemEvent) -> Unit,
+    onMenuClick: () -> Unit = {},
 ) {
     Scaffold(
-        topBar = { PeriodicTopAppBar() },
+        topBar = {
+            PeriodicTopAppBar(
+                title = "Scheduled Items",
+                onMenuClick = onMenuClick
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onEvent(ScheduledItemEvent.ShowAddDialog) }
@@ -91,20 +97,13 @@ fun CheckableTodoItem(
             .fillMaxWidth()
             .height(56.dp)
             .toggleable(
-//                value = scheduledItem.checked,
                 value = false,
-                onValueChange = { checked ->
-//                    when (checked) {
-//                        true -> onEvent(ScheduledItemEvent.Check(scheduledItem))
-//                        false -> onEvent(ScheduledItemEvent.Uncheck(scheduledItem))
-//                    }
-                },
+                onValueChange = {},
                 role = Role.Checkbox
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
-//            checked = scheduledItem.checked,
             checked = false,
             onCheckedChange = null,
             modifier = modifier.padding(horizontal = 16.dp)
@@ -122,6 +121,8 @@ fun ScheduledItemScreenPreview() {
     ScheduledItemScreen(
         ScheduledItemState(
             (1..30).map { ScheduledItem(Random.nextLong(), "Item $it", "desc", Instant.now()) }
-        )
-    ) { e -> }
+        ),
+        onEvent = { },
+        onMenuClick = { },
+    )
 }

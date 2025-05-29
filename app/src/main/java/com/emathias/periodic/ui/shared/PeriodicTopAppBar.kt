@@ -11,14 +11,17 @@ import androidx.compose.runtime.Composable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PeriodicTopAppBar() {
+fun PeriodicTopAppBar(
+    title: String = "Periodic",
+    onMenuClick: () -> Unit = {}
+) {
     TopAppBar(
-        title = { Text("Periodic") },
+        title = { Text(title) },
         navigationIcon = {
-            IconButton(onClick = { /* TODO: do something */ }) {
+            IconButton(onClick = onMenuClick) {
                 Icon(
                     imageVector = Icons.Filled.Menu,
-                    contentDescription = "Localized description"
+                    contentDescription = "Open navigation menu"
                 )
             }
         }

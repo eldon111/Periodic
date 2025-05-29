@@ -27,9 +27,15 @@ import kotlin.random.Random
 fun TodoItemScreen(
     state: TodoItemState,
     onEvent: (TodoItemEvent) -> Unit,
+    onMenuClick: () -> Unit = {},
 ) {
     Scaffold(
-        topBar = { PeriodicTopAppBar() },
+        topBar = {
+            PeriodicTopAppBar(
+                title = "To-Do Items",
+                onMenuClick = onMenuClick
+            )
+        },
 //        floatingActionButton = {
 //            FloatingActionButton(
 //                onClick = { onEvent(TodoItemEvent.ShowAddDialog) }
@@ -104,10 +110,12 @@ fun CheckableTodoItem(
 
 @Preview(showBackground = true)
 @Composable
-fun ScheduledItemScreenPreview() {
+fun TodoItemScreenPreview() {
     TodoItemScreen(
         TodoItemState(
             (1..30).map { TodoItem(Random.nextLong(), "Item $it") }
-        )
-    ) { e -> }
+        ),
+        onEvent = { },
+        onMenuClick = { },
+    )
 }
