@@ -53,12 +53,7 @@ class TodoListViewModel(
 
             HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
 
-            is ShowConfirmDialog -> _state.update {
-                it.copy(
-                    showingConfirmDialog = true,
-                    pendingScheduledItem = event.scheduledItem,
-                )
-            }
+            is ShowConfirmDialog -> _state.update { it.copy(showingConfirmDialog = true) }
 
             HideConfirmDialog -> _state.update {
                 it.copy(
@@ -73,12 +68,19 @@ class TodoListViewModel(
 
             is GenerateItem -> viewModelScope.launch {
                 val scheduledItem = aiService.generateScheduledItem(event.prompt).getOrThrow()
+                _state.update {
+                    it.copy(
+                        showingConfirmDialog = true,
+                        pendingScheduledItem = scheduledItem,
+                    )
+                }
                 onEvent(HideAddDialog)
-                onEvent(ShowConfirmDialog(scheduledItem))
+                onEvent(ShowConfirmDialog)
             }
 
             is ConfirmScheduledItem -> viewModelScope.launch {
                 scheduledItemDao.insert(event.scheduledItem)
+                onEvent(HideConfirmDialog)
             }
         }
     }
