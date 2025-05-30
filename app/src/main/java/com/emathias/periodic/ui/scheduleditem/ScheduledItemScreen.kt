@@ -121,9 +121,11 @@ fun ScheduledItemInfoBox(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // First occurrence
+            val formattedFirstOccurrence =
+                DateTimeUtils.formatDateTime(scheduledItem.firstOccurrence)
+            val timeText = if (scheduledItem.repeats) "Starts" else "At"
             Text(
-                text = "Starts: ${DateTimeUtils.formatDateTime(scheduledItem.firstOccurrence)}",
+                text = "${timeText}: $formattedFirstOccurrence",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
