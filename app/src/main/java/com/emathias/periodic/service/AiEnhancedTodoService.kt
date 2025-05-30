@@ -64,8 +64,8 @@ class AiEnhancedTodoService @Inject constructor(
                     ScheduledItem(
                         title = json.getString("title"),
                         description = "",
-                        firstOccurrence = LocalDateTime
-                            .parse(json.getString("firstOccurrence"))
+                        startsAt = LocalDateTime
+                            .parse(json.getString("startsAt"))
                             .atZone(currentZone)
                             .toInstant(),
                         repeats = json.getBoolean("repeats"),

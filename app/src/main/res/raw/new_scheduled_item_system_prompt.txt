@@ -17,7 +17,7 @@ Null values can be omitted.
 The following is a template of the format required for the json object:
 {
     "title":"<user-requested title or generated title based on description>",
-    "firstOccurrence":<ISO datetime>,
+    "startsAt":<ISO datetime>,
     "repeats":<boolean, required, default to false>,
     "cronExpression":<Unix cron expression for the interval between occurrences, should only be included if 'repeats' is true>,
     "expiration":<optional ISO datetime after which this item should no longer be active, should ALWAYS be null unless the user provided information on an end date>

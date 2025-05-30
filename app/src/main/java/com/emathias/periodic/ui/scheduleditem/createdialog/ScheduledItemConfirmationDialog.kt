@@ -30,8 +30,9 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmSchedule
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemState
 import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.random.Random
 
 @Composable
@@ -44,7 +45,7 @@ fun ScheduledItemConfirmationDialog(
             state.pendingScheduledItem ?: ScheduledItem(
                 title = "",
                 description = "",
-                firstOccurrence = Instant.now()
+                startsAt = Instant.now()
             )
         )
     }
@@ -110,8 +111,7 @@ fun ScheduledItemConfirmationDialog(
                 }
                 if (pendingScheduledItem.repeats) {
                     TextField(
-                        value = pendingScheduledItem.firstOccurrence.atZone(ZoneId.systemDefault())
-                            .toString(),
+                        value = DateTimeUtils.formatDateTime(pendingScheduledItem.firstOccurrence),
                         singleLine = true,
 //                    onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
@@ -121,7 +121,9 @@ fun ScheduledItemConfirmationDialog(
                             .padding(horizontal = 16.dp),
                     )
                     TextField(
-                        value = pendingScheduledItem.cronExpression?.let { CronUtils.formatCronExpression(it) } ?: "unknown",
+                        value = pendingScheduledItem.cronExpression
+                            ?.let { CronUtils.formatCronExpression(it) }
+                            ?: "unknown",
                         singleLine = true,
 //                        onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
@@ -131,8 +133,8 @@ fun ScheduledItemConfirmationDialog(
                             .padding(horizontal = 16.dp),
                     )
                     TextField(
-                        value = pendingScheduledItem.expiration?.atZone(ZoneId.systemDefault())
-                            ?.toString()
+                        value = pendingScheduledItem.expiration
+                            ?.let { DateTimeUtils.formatDateTime(it) }
                             ?: "never",
                         singleLine = true,
 //                    onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
@@ -144,8 +146,7 @@ fun ScheduledItemConfirmationDialog(
                     )
                 } else {
                     TextField(
-                        value = pendingScheduledItem.firstOccurrence.atZone(ZoneId.systemDefault())
-                            .toString(),
+                        value = DateTimeUtils.formatDateTime(pendingScheduledItem.firstOccurrence),
                         singleLine = true,
 //                    onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
@@ -177,7 +178,7 @@ fun ScheduledItemConfirmationDialogPreview() {
                     Random.nextLong(),
                     "Pick up kid from school",
                     "desc",
-                    Instant.now(),
+                    ZonedDateTime.now().plusDays(3).toInstant(),
                     repeats = true,
                     cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
                 )

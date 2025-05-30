@@ -31,10 +31,9 @@ import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirma
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
 @Composable
@@ -124,7 +123,7 @@ fun ScheduledItemInfoBox(
 
             // First occurrence
             Text(
-                text = "Starts: ${formatDateTime(scheduledItem.firstOccurrence)}",
+                text = "Starts: ${DateTimeUtils.formatDateTime(scheduledItem.firstOccurrence)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -153,7 +152,7 @@ fun ScheduledItemInfoBox(
             // Expiration (if set)
             scheduledItem.expiration?.let { expiration ->
                 Text(
-                    text = "Expires: ${formatDateTime(expiration)}",
+                    text = "Expires: ${DateTimeUtils.formatDateTime(expiration)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -162,13 +161,12 @@ fun ScheduledItemInfoBox(
     }
 }
 
-private fun formatDateTime(instant: Instant): String {
-    val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm")
-    return instant.atZone(ZoneId.systemDefault()).format(formatter)
-}
 
-
-@Preview(showBackground = true)
+@Preview(
+    showBackground = true,
+    device = "id:pixel_7_pro",
+    showSystemUi = true,
+)
 @Composable
 fun ScheduledItemScreenPreview() {
     ScheduledItemScreen(

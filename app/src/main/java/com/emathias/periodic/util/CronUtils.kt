@@ -55,17 +55,41 @@ object CronUtils {
     }
 
     /**
-     * Format a Cron expression into human-readable recurring text
+     * Format a Cron expression into human-readable recurring text with 12-hour format
      * Examples: "every week", "every month", "every day at 9:00 AM"
      */
     fun formatCronExpression(cron: Cron, locale: Locale = Locale.getDefault()): String {
         return try {
             val descriptor = CronDescriptor.instance(locale)
-            val text = descriptor.describe(cron)
-            text.replace("every day between Monday and Friday", "every weekday")
+            val description = descriptor.describe(cron)
+
+            // Convert to 12-hour format and apply custom replacements
+            convertTo12HourFormat(description)
+                .replace("every day between Monday and Friday", "every weekday")
         } catch (e: Exception) {
             // Fallback to cron string if description fails
             cron.asString()
+        }
+    }
+
+    /**
+     * Convert time descriptions from 24-hour to 12-hour format
+     * This ensures AM/PM format regardless of locale
+     */
+    private fun convertTo12HourFormat(description: String): String {
+        // Regex to match time patterns like "at 14:30" or "at 09:00"
+        val timePattern = Regex("at (\\d{1,2}):(\\d{2})")
+
+        return timePattern.replace(description) { matchResult ->
+            val hour = matchResult.groupValues[1].toInt()
+            val minute = matchResult.groupValues[2]
+
+            when {
+                hour == 0 -> "at 12:$minute AM"
+                hour < 12 -> "at $hour:$minute AM"
+                hour == 12 -> "at 12:$minute PM"
+                else -> "at ${hour - 12}:$minute PM"
+            }
         }
     }
 
@@ -122,7 +146,7 @@ object CronUtils {
      * This is useful for scheduled items to show when they will next occur
      */
     fun formatNextScheduledOccurrence(
-        firstOccurrence: Instant,
+        previousOccurrence: Instant,
         cronExpression: Cron?,
         locale: Locale = Locale.getDefault(),
     ): String {
@@ -130,8 +154,8 @@ object CronUtils {
 
         if (cronExpression == null) {
             // One-time occurrence
-            return if (firstOccurrence.isAfter(now)) {
-                formatRelativeTime(firstOccurrence, locale)
+            return if (previousOccurrence.isAfter(now)) {
+                formatRelativeTime(previousOccurrence, locale)
             } else {
                 "completed"
             }
