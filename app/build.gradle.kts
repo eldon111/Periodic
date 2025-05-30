@@ -68,6 +68,7 @@ android {
             excludes += "META-INF/LICENSE.txt"
             excludes += "META-INF/NOTICE"
             excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/NOTICE.md"
             excludes += "META-INF/ASL2.0"
             excludes += "META-INF/LGPL2.1"
             excludes += "META-INF/AL2.0"
@@ -115,6 +116,7 @@ dependencies {
     implementation(libs.aws.url.connection.client)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+    implementation(libs.cron.utils)
 
     testImplementation(libs.junit)
 

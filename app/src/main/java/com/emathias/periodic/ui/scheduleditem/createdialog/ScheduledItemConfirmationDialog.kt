@@ -29,6 +29,7 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemState
+import com.emathias.periodic.util.CronUtils
 import java.time.Instant
 import java.time.ZoneId
 import kotlin.random.Random
@@ -120,11 +121,11 @@ fun ScheduledItemConfirmationDialog(
                             .padding(horizontal = 16.dp),
                     )
                     TextField(
-                        value = pendingScheduledItem.interval.toString(),
+                        value = pendingScheduledItem.cronExpression?.let { CronUtils.formatCronExpression(it) } ?: "unknown",
                         singleLine = true,
 //                        onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
-                        label = { Text("Interval in Minutes") },
+                        label = { Text("Schedule") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
@@ -171,7 +172,16 @@ fun ScheduledItemConfirmationDialog(
 fun ScheduledItemConfirmationDialogPreview() {
     ScheduledItemConfirmationDialog(
         ScheduledItemState(
-            (1..30).map { ScheduledItem(Random.nextLong(), "Item $it", "desc", Instant.now()) }
+            pendingScheduledItem =
+                ScheduledItem(
+                    Random.nextLong(),
+                    "Pick up kid from school",
+                    "desc",
+                    Instant.now(),
+                    repeats = true,
+                    cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
+                )
+
         )
     ) { f -> }
 }

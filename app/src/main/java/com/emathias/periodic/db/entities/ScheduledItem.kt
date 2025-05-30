@@ -2,8 +2,8 @@ package com.emathias.periodic.db.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.cronutils.model.Cron
 import java.time.Instant
-import java.time.Period
 
 @Entity
 data class ScheduledItem(
@@ -12,6 +12,6 @@ data class ScheduledItem(
     val description: String,
     val firstOccurrence: Instant,
     val repeats: Boolean = false,
-    val interval: Period? = null,
+    val cronExpression: Cron? = null,
     val expiration: Instant? = null,
 )

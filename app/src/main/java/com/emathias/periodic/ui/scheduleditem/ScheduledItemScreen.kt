@@ -30,8 +30,8 @@ import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
+import com.emathias.periodic.util.CronUtils
 import java.time.Instant
-import java.time.Period
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -129,7 +129,7 @@ fun ScheduledItemInfoBox(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Repeats status with icon
+            // Repeats status with icon and schedule description
             if (scheduledItem.repeats) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -140,6 +140,13 @@ fun ScheduledItemInfoBox(
                         contentDescription = "Repeating",
                         tint = MaterialTheme.colorScheme.primary
                     )
+                    scheduledItem.cronExpression?.let { cron ->
+                        Text(
+                            text = CronUtils.formatCronExpression(cron),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -160,14 +167,6 @@ private fun formatDateTime(instant: Instant): String {
     return instant.atZone(ZoneId.systemDefault()).format(formatter)
 }
 
-private fun formatInterval(period: Period): String {
-    return when {
-        period.days > 0 -> "${period.days} day${if (period.days > 1) "s" else ""}"
-        period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
-        period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
-        else -> "Unknown interval"
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
@@ -179,9 +178,9 @@ fun ScheduledItemScreenPreview() {
                     Random.nextLong(),
                     "Pick up kid from school",
                     "desc",
-                    ZonedDateTime.now().plusDays(1).withHour(13).withMinute(20).toInstant(),
+                    Instant.now(),
                     repeats = true,
-                    interval = Period.ofDays(1),
+                    cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
                 ),
                 ScheduledItem(
                     Random.nextLong(),

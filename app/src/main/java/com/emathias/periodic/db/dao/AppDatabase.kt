@@ -3,8 +3,8 @@ package com.emathias.periodic.db.dao
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.emathias.periodic.db.converters.CronConverter
 import com.emathias.periodic.db.converters.InstantConverter
-import com.emathias.periodic.db.converters.PeriodConverter
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.db.entities.ScheduledItemHistory
 import com.emathias.periodic.db.entities.ScheduledItemProcessHistory
@@ -17,11 +17,11 @@ import com.emathias.periodic.db.entities.TodoItem
         ScheduledItemHistory::class,
         ScheduledItemProcessHistory::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 //    autoMigrations = [AutoMigration(from = 1, to = 2)]
 )
-@TypeConverters(InstantConverter::class, PeriodConverter::class)
+@TypeConverters(InstantConverter::class, CronConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun todoItemDao(): TodoItemDao
     abstract fun scheduledItemDao(): ScheduledItemDao

@@ -5,13 +5,13 @@ import android.util.Log
 import com.emathias.periodic.R
 import com.emathias.periodic.config.AwsCredentialManager
 import com.emathias.periodic.db.entities.ScheduledItem
+import com.emathias.periodic.util.CronUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.Period
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -69,8 +69,13 @@ class AiEnhancedTodoService @Inject constructor(
                             .atZone(currentZone)
                             .toInstant(),
                         repeats = json.getBoolean("repeats"),
-                        interval = json.takeUnless { it.isNull("interval") }?.let {
-                            Period.parse(json.getString("interval"))
+                        cronExpression = json.takeUnless { it.isNull("cronExpression") }?.let {
+                            val cronString = json.getString("cronExpression")
+                            CronUtils.parseCronExpression(cronString).also { cron ->
+                                if (cron == null) {
+                                    Log.w(TAG, "Failed to parse cron expression: $cronString")
+                                }
+                            }
                         },
                         expiration = json.takeUnless { it.isNull("expiration") }?.let {
                             LocalDateTime

@@ -10,7 +10,8 @@ DO NOT include ```json, ```, or any other markdown syntax.
 ONLY return the raw JSON object itself.
 Datetimes should ALWAYS be returned in ISO local date format (yyyy-MM-ddTHH:mm:ss).
 Datetimes should NEVER include a timezone, but should be in the user's local timezone.
-Durations should ALWAYS be returned in ISO 8601 duration format (P(n)Y(n)M(n)DT(n)H(n)M(n)S).
+Cron expressions should ALWAYS be returned in Unix cron format (5 fields: minute hour day month weekday).
+Cron expressions should use standard Unix cron syntax, for example: "0 9 * * 1" for every Monday at 9:00 AM.
 Null values can be omitted.
 
 The following is a template of the format required for the json object:
@@ -18,6 +19,6 @@ The following is a template of the format required for the json object:
     "title":"<user-requested title or generated title based on description>",
     "firstOccurrence":<ISO datetime>,
     "repeats":<boolean, required, default to false>,
-    "interval":<duration, should only be included if 'repeats' is true>,
+    "cronExpression":<Unix cron expression for the interval between occurrences, should only be included if 'repeats' is true>,
     "expiration":<optional ISO datetime after which this item should no longer be active, should ALWAYS be null unless the user provided information on an end date>
 }
