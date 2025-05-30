@@ -2,9 +2,8 @@ package com.emathias.periodic.db.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.github.shyiko.skedule.Schedule
 import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.time.Period
 
 @Entity
 data class ScheduledItem(
@@ -13,11 +12,6 @@ data class ScheduledItem(
     val description: String,
     val firstOccurrence: Instant,
     val repeats: Boolean = false,
-    val intervalInMinutes: Long? = null,
+    val interval: Period? = null,
     val expiration: Instant? = null,
-) {
-    val schedule: Schedule? by lazy {
-        intervalInMinutes?.let { Schedule.every(it, ChronoUnit.MINUTES) }
-//        Schedule.parse(cronString)
-    }
-}
+)

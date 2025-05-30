@@ -8,12 +8,16 @@ Your response should only be a single json object, with no other output of any k
 DO NOT wrap the JSON in markdown code blocks, quotes, or any other formatting.
 DO NOT include ```json, ```, or any other markdown syntax.
 ONLY return the raw JSON object itself.
+Datetimes should ALWAYS be returned in ISO local date format (yyyy-MM-ddTHH:mm:ss).
+Datetimes should NEVER include a timezone, but should be in the user's local timezone.
+Durations should ALWAYS be returned in ISO 8601 duration format (P(n)Y(n)M(n)DT(n)H(n)M(n)S).
+Null values can be omitted.
 
 The following is a template of the format required for the json object:
 {
     "title":"<user-requested title or generated title based on description>",
-    "firstOccurrence":<ISO datetime in UTC with the format yyyy-MM-ddTHH:mm:ssZ, taking the user's timezone into account>,
-    "repeats":<boolean, defaults to false>,
-    "interval":<you can leave this property out entirely if 'repeats' is false, otherwise ISO 8601 duration (format: P(n)Y(n)M(n)DT(n)H(n)M(n)S)>,
-    "expiration":<The date after which this item should no longer be generated. Optional, you can leave this property out entirely if 'repeats' is false, and it SHOULD be left out if no related information was provided by the user, or if the user indicates that the item should not expire. Format: ISO datetime in UTC with the format yyyy-MM-ddTHH:mm:ssZ, taking the user's timezone into account>
+    "firstOccurrence":<ISO datetime>,
+    "repeats":<boolean, required, default to false>,
+    "interval":<duration, should only be included if 'repeats' is true>,
+    "expiration":<optional ISO datetime after which this item should no longer be active, should ALWAYS be null unless the user provided information on an end date>
 }

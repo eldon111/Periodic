@@ -9,9 +9,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.time.Duration
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.Period
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,10 +35,25 @@ class AiEnhancedTodoService @Inject constructor(
             return Result.failure(Exception("AWS credentials not configured"))
         }
 
+        // Get current timezone and date/time information
+        val currentZone = ZoneId.systemDefault()
+        val currentDateTime = OffsetDateTime.now(currentZone)
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+        val extraInfo =
+            """
+            |
+            |
+            |
+            |Additional context:
+            | Current timezone: ${currentZone.id},
+            | Current date and time: ${currentDateTime.format(formatter)}
+            """.trimMargin()
+
         return try {
             val response = bedrockService.generateTextWithNova(
                 systemPrompt = loadScheduledItemSystemPrompt(),
-                prompt = userInput,
+                prompt = userInput + extraInfo,
                 maxTokens = 300,
                 temperature = 0.7f
             )
@@ -47,14 +64,19 @@ class AiEnhancedTodoService @Inject constructor(
                     ScheduledItem(
                         title = json.getString("title"),
                         description = "",
-                        firstOccurrence = OffsetDateTime.parse(json.getString("firstOccurrence"))
+                        firstOccurrence = LocalDateTime
+                            .parse(json.getString("firstOccurrence"))
+                            .atZone(currentZone)
                             .toInstant(),
                         repeats = json.getBoolean("repeats"),
-                        intervalInMinutes = json.takeUnless { it.isNull("interval") }?.let {
-                            parseIntervalInMinutes(json.getString("interval"))
+                        interval = json.takeUnless { it.isNull("interval") }?.let {
+                            Period.parse(json.getString("interval"))
                         },
                         expiration = json.takeUnless { it.isNull("expiration") }?.let {
-                            OffsetDateTime.parse(json.getString("expiration")).toInstant()
+                            LocalDateTime
+                                .parse(json.getString("expiration"))
+                                .atZone(currentZone)
+                                .toInstant()
                         },
                     )
                 }
@@ -62,26 +84,6 @@ class AiEnhancedTodoService @Inject constructor(
             Log.e(TAG, "Error generating scheduled item", e)
             Result.failure(e)
         }
-    }
-
-    private fun parseIntervalInMinutes(intervalString: String): Long {
-        val parts = intervalString.split("T")
-        println(parts)
-        if (parts.size == 1) {
-            return try {
-//                println(Period.parse(parts[0]).days * 24L * 60L)
-//                println(Period.parse(parts[0]).years)
-//                println(Period.parse(parts[0]).months)
-                Period.parse(parts[0]).days * 24L * 60L
-            } catch (e: Exception) {
-                println("Failed to parse period: $e")
-                println(Duration.parse(parts[0]).toMinutes())
-                Duration.parse(parts[0]).toMinutes()
-            }
-        }
-        val period = Period.parse(parts[0])
-        val duration = Duration.parse(parts[1])
-        return period.days * 24L * 60L + duration.toMinutes()
     }
 
     /**

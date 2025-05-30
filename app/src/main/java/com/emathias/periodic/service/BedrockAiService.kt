@@ -39,6 +39,7 @@ class BedrockAiService @Inject constructor(
             // For Nova Lite, we need to combine system prompt and user prompt
             // as it doesn't support system role
             val combinedPrompt = "$systemPrompt\n\nUser input: $prompt"
+            Log.d(TAG, "Combined prompt: $combinedPrompt")
 
             val requestBody = JSONObject().apply {
                 put("schemaVersion", "messages-v1")

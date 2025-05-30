@@ -120,7 +120,7 @@ fun ScheduledItemConfirmationDialog(
                             .padding(horizontal = 16.dp),
                     )
                     TextField(
-                        value = pendingScheduledItem.intervalInMinutes.toString(),
+                        value = pendingScheduledItem.interval.toString(),
                         singleLine = true,
 //                        onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
