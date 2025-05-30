@@ -1,33 +1,40 @@
 package com.emathias.periodic.ui.scheduleditem
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import java.time.Instant
+import java.time.Period
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
 @Composable
@@ -76,42 +83,89 @@ fun ScheduledItemList(
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(modifier = modifier) {
+    LazyColumn(
+        modifier = modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         items(scheduledItems) { scheduledItem ->
-            CheckableTodoItem(
-                scheduledItem,
-                onEvent
+            ScheduledItemInfoBox(
+                scheduledItem = scheduledItem,
+                onEvent = onEvent
             )
         }
     }
 }
 
 @Composable
-fun CheckableTodoItem(
+fun ScheduledItemInfoBox(
     scheduledItem: ScheduledItem,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .toggleable(
-                value = false,
-                onValueChange = {},
-                role = Role.Checkbox
-            ),
-        verticalAlignment = Alignment.CenterVertically
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Checkbox(
-            checked = false,
-            onCheckedChange = null,
-            modifier = modifier.padding(horizontal = 16.dp)
-        )
-        Text(
-            text = scheduledItem.title,
-            fontSize = 40.sp
-        )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Title
+            Text(
+                text = scheduledItem.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // First occurrence
+            Text(
+                text = "Starts: ${formatDateTime(scheduledItem.firstOccurrence)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            // Repeats status with icon
+            if (scheduledItem.repeats) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Repeating",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Expiration (if set)
+            scheduledItem.expiration?.let { expiration ->
+                Text(
+                    text = "Expires: ${formatDateTime(expiration)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+private fun formatDateTime(instant: Instant): String {
+    val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm")
+    return instant.atZone(ZoneId.systemDefault()).format(formatter)
+}
+
+private fun formatInterval(period: Period): String {
+    return when {
+        period.days > 0 -> "${period.days} day${if (period.days > 1) "s" else ""}"
+        period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
+        period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
+        else -> "Unknown interval"
     }
 }
 
@@ -120,7 +174,23 @@ fun CheckableTodoItem(
 fun ScheduledItemScreenPreview() {
     ScheduledItemScreen(
         ScheduledItemState(
-            (1..30).map { ScheduledItem(Random.nextLong(), "Item $it", "desc", Instant.now()) }
+            listOf(
+                ScheduledItem(
+                    Random.nextLong(),
+                    "Pick up kid from school",
+                    "desc",
+                    ZonedDateTime.now().plusDays(1).withHour(13).withMinute(20).toInstant(),
+                    repeats = true,
+                    interval = Period.ofDays(1),
+                ),
+                ScheduledItem(
+                    Random.nextLong(),
+                    "Pick up dry cleaning",
+                    "desc",
+                    ZonedDateTime.now().plusDays(1).toInstant(),
+                    repeats = false,
+                ),
+            )
         ),
         onEvent = { },
         onMenuClick = { },
