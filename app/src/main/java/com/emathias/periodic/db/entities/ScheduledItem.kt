@@ -3,9 +3,8 @@ package com.emathias.periodic.db.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.cronutils.model.Cron
-import com.cronutils.model.time.ExecutionTime
+import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZoneOffset
 
 @Entity
 data class ScheduledItem(
@@ -18,15 +17,7 @@ data class ScheduledItem(
     val expiration: Instant? = null,
 ) {
     val firstOccurrence: Instant by lazy {
-        cronExpression?.let { cron ->
-            val executionTime = ExecutionTime.forCron(cron)
-            val startsAtZoned = startsAt.atZone(ZoneOffset.systemDefault())
-            if (executionTime.isMatch(startsAtZoned)) {
-                startsAt
-            } else {
-                executionTime.nextExecution(startsAtZoned).orElse(null)?.toInstant()
-            }
-        } ?: startsAt
+        DateTimeUtils.getFirstOccurrence(startsAt, cronExpression)
     }
 }
 
