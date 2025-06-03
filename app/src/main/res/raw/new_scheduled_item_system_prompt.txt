@@ -8,8 +8,8 @@ Your response should only be a single json object, with no other output of any k
 DO NOT wrap the JSON in markdown code blocks, quotes, or any other formatting.
 DO NOT include ```json, ```, or any other markdown syntax.
 ONLY return the raw JSON object itself.
-Datetimes should ALWAYS be returned in ISO local date format (yyyy-MM-ddTHH:mm:ss).
-Datetimes should NEVER include a timezone, but should be in the user's local timezone.
+Datetimes should ALWAYS be returned in ISO local date format (yyyy-MM-ddTHH:mm:ssZ).
+Datetimes should ALWAYS be converted to UTC before returning, but all times given by the user are in their local timezone.
 Cron expressions should ALWAYS be returned in Unix cron format (5 fields: minute hour day month weekday).
 Cron expressions should use standard Unix cron syntax, for example: "0 9 * * 1" for every Monday at 9:00 AM.
 Null values can be omitted.

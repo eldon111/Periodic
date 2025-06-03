@@ -17,6 +17,8 @@ local.properties
 /.idea/AugmentWebviewStateStore.xml
 /.idea/inspectionProfiles
 /.kotlin
+.aider*
+.claude*
 
 # Security: Additional files that might contain sensitive information
 *.key

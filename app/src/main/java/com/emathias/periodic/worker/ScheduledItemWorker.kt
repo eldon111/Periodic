@@ -19,12 +19,19 @@ class ScheduledItemWorker @AssistedInject constructor(
 ) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
-        val cutoff = scheduledItemProcessHistoryDao
-            .getMostRecent()?.processedAt
-            ?: Instant.MIN
+        return try {
+            val cutoff = scheduledItemProcessHistoryDao
+                .getMostRecent()?.processedAt
+                ?: Instant.MIN
 
-        scheduledItemProcessor.processAll(cutoff)
+            // Use runBlocking since WorkManager doWork() is not a suspend function
+            kotlinx.coroutines.runBlocking {
+                scheduledItemProcessor.processAll(cutoff)
+            }
 
-        return Result.success()
+            Result.success()
+        } catch (e: Exception) {
+            Result.failure()
+        }
     }
 }

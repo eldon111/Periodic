@@ -31,6 +31,46 @@ class AiEnhancedTodoService @Inject constructor(
      * Generate smart suggestions for todo items based on user input
      */
     suspend fun generateScheduledItem(userInput: String): Result<ScheduledItem> {
+        val currentZone = ZoneId.systemDefault()
+        val scheduledItem: Result<JSONObject> = generateScheduledItemAsJson(userInput)
+
+        return try {
+            return scheduledItem
+                .map { json ->
+                    ScheduledItem(
+                        title = json.getString("title"),
+                        description = "",
+                        startsAt = LocalDateTime
+                            .parse(json.getString("startsAt"))
+                            .atZone(currentZone)
+                            .toInstant(),
+                        repeats = json.getBoolean("repeats"),
+                        cronExpression = json.takeUnless { it.isNull("cronExpression") }?.let {
+                            val cronString = json.getString("cronExpression")
+                            CronUtils.parseCronExpression(cronString).also { cron ->
+                                if (cron == null) {
+                                    Log.w(TAG, "Failed to parse cron expression: $cronString")
+                                }
+                            }
+                        },
+                        expiration = json.takeUnless { it.isNull("expiration") }?.let {
+                            LocalDateTime
+                                .parse(json.getString("expiration"))
+                                .atZone(currentZone)
+                                .toInstant()
+                        },
+                    )
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error mapping scheduled item", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Generate smart suggestions for todo items based on user input
+     */
+    suspend fun generateScheduledItemAsJson(userInput: String): Result<JSONObject> {
         if (!credentialManager.areCredentialsConfigured()) {
             return Result.failure(Exception("AWS credentials not configured"))
         }
@@ -57,34 +97,7 @@ class AiEnhancedTodoService @Inject constructor(
                 maxTokens = 300,
                 temperature = 0.7f
             )
-
-            return response
-                .map { JSONObject(it) }
-                .map { json ->
-                    ScheduledItem(
-                        title = json.getString("title"),
-                        description = "",
-                        startsAt = LocalDateTime
-                            .parse(json.getString("startsAt"))
-                            .atZone(currentZone)
-                            .toInstant(),
-                        repeats = json.getBoolean("repeats"),
-                        cronExpression = json.takeUnless { it.isNull("cronExpression") }?.let {
-                            val cronString = json.getString("cronExpression")
-                            CronUtils.parseCronExpression(cronString).also { cron ->
-                                if (cron == null) {
-                                    Log.w(TAG, "Failed to parse cron expression: $cronString")
-                                }
-                            }
-                        },
-                        expiration = json.takeUnless { it.isNull("expiration") }?.let {
-                            LocalDateTime
-                                .parse(json.getString("expiration"))
-                                .atZone(currentZone)
-                                .toInstant()
-                        },
-                    )
-                }
+            return response.map { JSONObject(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Error generating scheduled item", e)
             Result.failure(e)

@@ -2,7 +2,7 @@ package com.emathias.periodic.ui.scheduleditem
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emathias.periodic.db.dao.ScheduledItemDao
+import com.emathias.periodic.api.ScheduledItemApiService
 import com.emathias.periodic.service.AiEnhancedTodoService
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
@@ -18,13 +18,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ScheduledItemViewModel(
-    private val scheduledItemDao: ScheduledItemDao,
+    private val scheduledItemApiService: ScheduledItemApiService,
     private val aiService: AiEnhancedTodoService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScheduledItemState())
     private val _scheduledItems =
-        scheduledItemDao.getAll()
+        scheduledItemApiService.getAllScheduledItems()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val state = combine(_state, _scheduledItems) { state, scheduledItems ->
@@ -68,13 +68,13 @@ class ScheduledItemViewModel(
 //            }
 
             is GenerateItem -> viewModelScope.launch {
-                val scheduledItem = aiService.generateScheduledItem(event.prompt).getOrThrow()
+                val jsonResult = aiService.generateScheduledItemAsJson(event.prompt).getOrThrow()
+                val id = scheduledItemApiService.insertScheduledItem(jsonResult)
                 onEvent(HideAddDialog)
-                onEvent(ShowConfirmDialog(scheduledItem))
             }
 
             is ConfirmScheduledItem -> viewModelScope.launch {
-                scheduledItemDao.insert(event.scheduledItem)
+                scheduledItemApiService.insertScheduledItem(event.scheduledItem)
                 onEvent(HideConfirmDialog)
             }
         }
