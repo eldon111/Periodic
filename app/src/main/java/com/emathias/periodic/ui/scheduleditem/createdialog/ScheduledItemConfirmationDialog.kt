@@ -32,7 +32,7 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemState
 import com.emathias.periodic.util.CronUtils
 import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import kotlin.random.Random
 
 @Composable
@@ -178,7 +178,7 @@ fun ScheduledItemConfirmationDialogPreview() {
                     Random.nextLong(),
                     "Pick up kid from school",
                     "desc",
-                    ZonedDateTime.now().plusDays(3).toInstant(),
+                    OffsetDateTime.now().plusDays(3).toInstant(),
                     repeats = true,
                     cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
                 )

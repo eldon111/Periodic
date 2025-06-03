@@ -3,7 +3,6 @@ package com.emathias.periodic.ui.scheduleditem
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.api.ScheduledItemApiService
-import com.emathias.periodic.model.converters.ScheduledItemJsonConverter
 import com.emathias.periodic.service.AiEnhancedTodoService
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 
 class ScheduledItemViewModel(
     private val scheduledItemApiService: ScheduledItemApiService,
-    private val scheduledItemJsonConverter: ScheduledItemJsonConverter,
     private val aiService: AiEnhancedTodoService,
 ) : ViewModel() {
 

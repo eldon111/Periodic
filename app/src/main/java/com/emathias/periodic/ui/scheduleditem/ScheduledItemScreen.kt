@@ -33,7 +33,7 @@ import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.util.CronUtils
 import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import kotlin.random.Random
 
 @Composable
@@ -186,7 +186,7 @@ fun ScheduledItemScreenPreview() {
                     Random.nextLong(),
                     "Pick up dry cleaning",
                     "desc",
-                    ZonedDateTime.now().plusDays(1).toInstant(),
+                    OffsetDateTime.now().plusDays(1).toInstant(),
                     repeats = false,
                 ),
             )

@@ -4,8 +4,9 @@ import android.util.Log
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.util.CronUtils
 import org.json.JSONObject
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,16 +15,17 @@ class ScheduledItemJsonConverter @Inject constructor() {
 
     companion object {
         private const val TAG = "ScheduledItemJsonConverter"
+        private val DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
     }
 
     fun parseScheduledItem(json: JSONObject): ScheduledItem {
-        val currentZone = ZoneId.systemDefault()
         return ScheduledItem(
+            id = if (json.has("id")) json.getLong("id") else 0L,
             title = json.getString("title"),
             description = "",
-            startsAt = LocalDateTime
+            startsAt = OffsetDateTime
                 .parse(json.getString("startsAt"))
-                .atZone(currentZone)
                 .toInstant(),
             repeats = json.getBoolean("repeats"),
             cronExpression = json.takeUnless { it.isNull("cronExpression") }?.let {
@@ -35,23 +37,21 @@ class ScheduledItemJsonConverter @Inject constructor() {
                 }
             },
             expiration = json.takeUnless { it.isNull("expiration") }?.let {
-                LocalDateTime
+                OffsetDateTime
                     .parse(json.getString("expiration"))
-                    .atZone(currentZone)
                     .toInstant()
             },
         )
     }
 
     fun scheduledItemToJson(scheduledItem: ScheduledItem): JSONObject {
-        val currentZone = ZoneId.systemDefault()
         val json = JSONObject()
 
         json.put("title", scheduledItem.title)
         json.put("description", scheduledItem.description)
         json.put(
             "startsAt",
-            LocalDateTime.ofInstant(scheduledItem.startsAt, currentZone).toString()
+            scheduledItem.startsAt.atOffset(ZoneOffset.UTC).format(DATE_TIME_FORMATTER)
         )
         json.put("repeats", scheduledItem.repeats)
 
@@ -60,7 +60,10 @@ class ScheduledItemJsonConverter @Inject constructor() {
         } ?: json.put("cronExpression", JSONObject.NULL)
 
         scheduledItem.expiration?.let { expiration ->
-            json.put("expiration", LocalDateTime.ofInstant(expiration, currentZone).toString())
+            json.put(
+                "expiration",
+                expiration.atOffset(ZoneOffset.UTC).format(DATE_TIME_FORMATTER)
+            )
         } ?: json.put("expiration", JSONObject.NULL)
 
         return json

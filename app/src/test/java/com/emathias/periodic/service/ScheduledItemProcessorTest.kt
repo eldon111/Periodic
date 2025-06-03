@@ -4,24 +4,28 @@ import com.emathias.periodic.db.dao.FakeScheduledItemDao
 import com.emathias.periodic.db.dao.FakeScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.FakeTodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
+import com.emathias.periodic.util.CronUtils
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import kotlin.random.Random
 
 class ScheduledItemProcessorTest {
 
-    val now: ZonedDateTime = ZonedDateTime.now()
-    val mostRecentHour: ZonedDateTime = now.withMinute(0).withSecond(0).withNano(0)
-    val oneHourAgo: ZonedDateTime = mostRecentHour.minusHours(1)
-    val twoHoursAgo: ZonedDateTime = mostRecentHour.minusHours(2)
-    val threeHoursAgo: ZonedDateTime = mostRecentHour.minusHours(3)
+    val now: OffsetDateTime = OffsetDateTime.now()
+    val mostRecentHour: OffsetDateTime = now.withMinute(0).withSecond(0).withNano(0)
+    val oneHourAgo: OffsetDateTime = mostRecentHour.minusHours(1)
+    val twoHoursAgo: OffsetDateTime = mostRecentHour.minusHours(2)
+    val threeHoursAgo: OffsetDateTime = mostRecentHour.minusHours(3)
 
     val hourlyItem = ScheduledItem(
-        Random.nextLong(),
-        "hourly item",
-        "every hour"
+        id = Random.nextLong(),
+        title = "hourly item",
+        description = "hourly item",
+        startsAt = now.toInstant(),
+        repeats = true,
+        cronExpression = CronUtils.parseCronExpression("0 * * * *"),
     )
 
     lateinit var processor: ScheduledItemProcessor

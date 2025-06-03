@@ -1,6 +1,7 @@
 package com.emathias.periodic.config
 
 import com.emathias.periodic.api.ScheduledItemApiService
+import com.emathias.periodic.model.converters.ScheduledItemJsonConverter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,6 +14,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ApiModule {
+
+    @Provides
+    @Singleton
+    fun providesScheduledItemJsonConverter(): ScheduledItemJsonConverter {
+        return ScheduledItemJsonConverter()
+    }
 
     @Provides
     @Singleton
@@ -31,7 +38,10 @@ object ApiModule {
 
     @Provides
     @Singleton
-    fun providesScheduledItemApiService(client: OkHttpClient): ScheduledItemApiService {
-        return ScheduledItemApiService(client)
+    fun providesScheduledItemApiService(
+        client: OkHttpClient,
+        scheduledItemJsonConverter: ScheduledItemJsonConverter,
+    ): ScheduledItemApiService {
+        return ScheduledItemApiService(client, scheduledItemJsonConverter)
     }
 }

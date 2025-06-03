@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import com.cronutils.model.Cron
 import com.cronutils.model.time.ExecutionTime
 import java.time.Instant
-import java.time.ZoneId
+import java.time.ZoneOffset
 
 @Entity
 data class ScheduledItem(
@@ -20,7 +20,7 @@ data class ScheduledItem(
     val firstOccurrence: Instant by lazy {
         cronExpression?.let { cron ->
             ExecutionTime.forCron(cron)
-                .nextExecution(startsAt.atZone(ZoneId.systemDefault()))
+                .nextExecution(startsAt.atZone(ZoneOffset.systemDefault()))
                 .orElse(null)
                 ?.toInstant()
         } ?: startsAt
