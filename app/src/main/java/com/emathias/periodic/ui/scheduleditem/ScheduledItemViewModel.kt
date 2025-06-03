@@ -3,6 +3,7 @@ package com.emathias.periodic.ui.scheduleditem
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.api.ScheduledItemApiService
+import com.emathias.periodic.model.converters.ScheduledItemJsonConverter
 import com.emathias.periodic.service.AiEnhancedTodoService
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 
 class ScheduledItemViewModel(
     private val scheduledItemApiService: ScheduledItemApiService,
+    private val scheduledItemJsonConverter: ScheduledItemJsonConverter,
     private val aiService: AiEnhancedTodoService,
 ) : ViewModel() {
 
@@ -33,18 +35,6 @@ class ScheduledItemViewModel(
 
     fun onEvent(event: ScheduledItemEvent) {
         when (event) {
-//            is Check -> {
-//                viewModelScope.launch {
-//                    todoItemDao.update(event.todoItem.copy(checked = true))
-//                }
-//            }
-//
-//            is Uncheck -> {
-//                viewModelScope.launch {
-//                    todoItemDao.update(event.todoItem.copy(checked = false))
-//                }
-//            }
-
             ShowAddDialog -> _state.update { it.copy(showingAddDialog = true) }
 
             HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
@@ -63,13 +53,9 @@ class ScheduledItemViewModel(
                 )
             }
 
-//            is AddItem -> viewModelScope.launch {
-//                todoItemDao.insert(event.todoItem)
-//            }
-
             is GenerateItem -> viewModelScope.launch {
-                val jsonResult = aiService.generateScheduledItemAsJson(event.prompt).getOrThrow()
-                val id = scheduledItemApiService.insertScheduledItem(jsonResult)
+                val jsonResult = aiService.generateScheduledItem(event.prompt).getOrThrow()
+                onEvent(ShowConfirmDialog(jsonResult))
                 onEvent(HideAddDialog)
             }
 

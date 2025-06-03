@@ -5,12 +5,11 @@ import android.util.Log
 import com.emathias.periodic.R
 import com.emathias.periodic.config.AwsCredentialManager
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.converters.ScheduledItemJsonConverter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -21,6 +20,7 @@ import javax.inject.Singleton
 class AiEnhancedTodoService @Inject constructor(
     private val bedrockService: BedrockAiService,
     private val credentialManager: AwsCredentialManager,
+    private val scheduledItemJsonConverter: ScheduledItemJsonConverter,
     @ApplicationContext private val context: Context,
 ) {
     companion object {
@@ -31,41 +31,16 @@ class AiEnhancedTodoService @Inject constructor(
      * Generate smart suggestions for todo items based on user input
      */
     suspend fun generateScheduledItem(userInput: String): Result<ScheduledItem> {
-        val currentZone = ZoneId.systemDefault()
-        val scheduledItem: Result<JSONObject> = generateScheduledItemAsJson(userInput)
+        val scheduledItemJson: Result<JSONObject> = generateScheduledItemAsJson(userInput)
 
         return try {
-            return scheduledItem
-                .map { json ->
-                    ScheduledItem(
-                        title = json.getString("title"),
-                        description = "",
-                        startsAt = LocalDateTime
-                            .parse(json.getString("startsAt"))
-                            .atZone(currentZone)
-                            .toInstant(),
-                        repeats = json.getBoolean("repeats"),
-                        cronExpression = json.takeUnless { it.isNull("cronExpression") }?.let {
-                            val cronString = json.getString("cronExpression")
-                            CronUtils.parseCronExpression(cronString).also { cron ->
-                                if (cron == null) {
-                                    Log.w(TAG, "Failed to parse cron expression: $cronString")
-                                }
-                            }
-                        },
-                        expiration = json.takeUnless { it.isNull("expiration") }?.let {
-                            LocalDateTime
-                                .parse(json.getString("expiration"))
-                                .atZone(currentZone)
-                                .toInstant()
-                        },
-                    )
-                }
+            return scheduledItemJson.map { scheduledItemJsonConverter.parseScheduledItem(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Error mapping scheduled item", e)
             Result.failure(e)
         }
     }
+
 
     /**
      * Generate smart suggestions for todo items based on user input
