@@ -19,10 +19,13 @@ data class ScheduledItem(
 ) {
     val firstOccurrence: Instant by lazy {
         cronExpression?.let { cron ->
-            ExecutionTime.forCron(cron)
-                .nextExecution(startsAt.atZone(ZoneOffset.systemDefault()))
-                .orElse(null)
-                ?.toInstant()
+            val executionTime = ExecutionTime.forCron(cron)
+            val startsAtZoned = startsAt.atZone(ZoneOffset.systemDefault())
+            if (executionTime.isMatch(startsAtZoned)) {
+                startsAt
+            } else {
+                executionTime.nextExecution(startsAtZoned).orElse(null)?.toInstant()
+            }
         } ?: startsAt
     }
 }
