@@ -114,6 +114,11 @@ dependencies {
         exclude(group = "commons-logging", module = "commons-logging")
     }
     implementation(libs.aws.url.connection.client)
+    implementation(libs.aws.appconfig) {
+        exclude(group = "org.apache.httpcomponents", module = "httpclient")
+        exclude(group = "org.apache.httpcomponents", module = "httpcore")
+        exclude(group = "commons-logging", module = "commons-logging")
+    }
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.cron.utils)

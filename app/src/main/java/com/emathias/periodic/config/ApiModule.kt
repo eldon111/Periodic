@@ -41,7 +41,8 @@ object ApiModule {
     fun providesScheduledItemApiService(
         client: OkHttpClient,
         scheduledItemJsonConverter: ScheduledItemJsonConverter,
+        appConfigService: AppConfigService,
     ): ScheduledItemApiService {
-        return ScheduledItemApiService(client, scheduledItemJsonConverter)
+        return ScheduledItemApiService(client, scheduledItemJsonConverter, appConfigService)
     }
 }

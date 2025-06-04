@@ -46,6 +46,7 @@ aws-bedrock-runtime = { group = "software.amazon.awssdk", name = "bedrockruntime
 aws-core = { group = "software.amazon.awssdk", name = "aws-core", version.ref = "aws-sdk" }
 aws-auth = { group = "software.amazon.awssdk", name = "auth", version.ref = "aws-sdk" }
 aws-url-connection-client = { group = "software.amazon.awssdk", name = "url-connection-client", version.ref = "aws-sdk" }
+aws-appconfig = { group = "software.amazon.awssdk", name = "appconfigdata", version.ref = "aws-sdk" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 cron-utils = { group = "com.cronutils", name = "cron-utils", version.ref = "cron-utils" }

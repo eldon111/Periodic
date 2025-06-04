@@ -11,6 +11,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.appconfigdata.AppConfigDataClient
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 import java.time.Duration
 import javax.inject.Singleton
@@ -47,6 +48,22 @@ object AwsConfig {
             .build()
 
         return BedrockRuntimeClient.builder()
+            .region(Region.US_EAST_1)
+            .credentialsProvider(StaticCredentialsProvider.create(credentials))
+            .overrideConfiguration(clientConfig)
+            .httpClient(UrlConnectionHttpClient.builder().build())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppConfigClient(credentials: AwsBasicCredentials): AppConfigDataClient {
+        val clientConfig = ClientOverrideConfiguration.builder()
+            .apiCallTimeout(Duration.ofSeconds(30))
+            .apiCallAttemptTimeout(Duration.ofSeconds(10))
+            .build()
+
+        return AppConfigDataClient.builder()
             .region(Region.US_EAST_1)
             .credentialsProvider(StaticCredentialsProvider.create(credentials))
             .overrideConfiguration(clientConfig)

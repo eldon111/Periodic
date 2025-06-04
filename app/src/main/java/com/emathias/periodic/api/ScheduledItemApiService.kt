@@ -1,5 +1,6 @@
 package com.emathias.periodic.api
 
+import com.emathias.periodic.config.AppConfigService
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.model.converters.ScheduledItemJsonConverter
 import kotlinx.coroutines.Dispatchers
@@ -20,11 +21,14 @@ import javax.inject.Singleton
 class ScheduledItemApiService @Inject constructor(
     private val client: OkHttpClient,
     private val scheduledItemJsonConverter: ScheduledItemJsonConverter,
+    private val appConfigService: AppConfigService,
 ) {
-    private val baseUrl = "http://10.0.2.2:8080"
     private val contentType = "application/json".toMediaType()
 
+    private suspend fun getBaseUrl(): String = appConfigService.getApiBaseUrl()
+
     fun getAllScheduledItems(): Flow<List<ScheduledItem>> = flow {
+        val baseUrl = getBaseUrl()
         val request = Request.Builder()
             .url("$baseUrl/scheduled-items")
             .get()
@@ -45,6 +49,7 @@ class ScheduledItemApiService @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     suspend fun insertScheduledItem(json: JSONObject): Long = withContext(Dispatchers.IO) {
+        val baseUrl = getBaseUrl()
         val requestBody = json.toString().toRequestBody(contentType)
 
         val request = Request.Builder()
@@ -67,6 +72,7 @@ class ScheduledItemApiService @Inject constructor(
     }
 
     suspend fun updateScheduledItem(item: ScheduledItem) = withContext(Dispatchers.IO) {
+        val baseUrl = getBaseUrl()
         val requestBody = scheduledItemJsonConverter
             .scheduledItemToJson(item)
             .toString()
@@ -83,6 +89,7 @@ class ScheduledItemApiService @Inject constructor(
     }
 
     suspend fun deleteScheduledItem(id: Long) = withContext(Dispatchers.IO) {
+        val baseUrl = getBaseUrl()
         val request = Request.Builder()
             .url("$baseUrl/scheduled-items/$id")
             .delete()
