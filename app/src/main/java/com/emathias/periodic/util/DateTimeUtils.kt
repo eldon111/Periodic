@@ -18,10 +18,10 @@ object DateTimeUtils {
      * Uses 12-hour format with AM/PM for consistency with cron descriptions.
      *
      * @param instant The Instant to format
-     * @return Formatted string like "Jan 15, 2024 at 2:30 PM"
+     * @return Formatted string like "Mon, Jan 15, 2024 at 2:30 PM"
      */
     fun formatDateTime(instant: Instant): String {
-        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' h:mm a")
+        val formatter = DateTimeFormatter.ofPattern("EEE, MMM dd, yyyy 'at' h:mm a")
         return instant.atZone(ZoneId.systemDefault()).format(formatter)
     }
 
@@ -32,7 +32,7 @@ object DateTimeUtils {
      * @return Formatted string like "Jan 15, 2024"
      */
     fun formatDate(instant: Instant): String {
-        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+        val formatter = DateTimeFormatter.ofPattern("EEE, MMM dd, yyyy")
         return instant.atZone(ZoneId.systemDefault()).format(formatter)
     }
 

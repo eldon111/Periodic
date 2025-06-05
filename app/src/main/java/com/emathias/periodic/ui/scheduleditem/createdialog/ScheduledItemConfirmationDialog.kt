@@ -112,7 +112,7 @@ fun ScheduledItemConfirmationDialog(
                 if (pendingScheduledItem.repeats) {
                     TextField(
                         value = DateTimeUtils.formatDateTime(pendingScheduledItem.firstOccurrence),
-                        singleLine = true,
+                        singleLine = false,
 //                    onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
                         label = { Text("First Occurrence") },
@@ -124,7 +124,7 @@ fun ScheduledItemConfirmationDialog(
                         value = pendingScheduledItem.cronExpression
                             ?.let { CronUtils.formatCronExpression(it) }
                             ?: "unknown",
-                        singleLine = true,
+                        singleLine = false,
 //                        onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
                         label = { Text("Schedule") },
@@ -134,9 +134,9 @@ fun ScheduledItemConfirmationDialog(
                     )
                     TextField(
                         value = pendingScheduledItem.expiration
-                            ?.let { DateTimeUtils.formatDateTime(it) }
+                            ?.let { DateTimeUtils.formatDate(it) }
                             ?: "never",
-                        singleLine = true,
+                        singleLine = false,
 //                    onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
                         label = { Text("Expiration") },
@@ -181,6 +181,7 @@ fun ScheduledItemConfirmationDialogPreview() {
                     OffsetDateTime.now().plusDays(3).toInstant(),
                     repeats = true,
                     cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
+                    expiration = OffsetDateTime.now().plusMonths(6).toInstant(),
                 )
 
         )
