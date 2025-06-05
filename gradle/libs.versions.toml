@@ -42,7 +42,7 @@ hilt = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
 androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "androidx-hilt" }
 androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidx-hilt" }
-aws-bedrock-runtime = { group = "software.amazon.awssdk", name = "bedrockruntime", version.ref = "aws-sdk" }
+
 aws-core = { group = "software.amazon.awssdk", name = "aws-core", version.ref = "aws-sdk" }
 aws-auth = { group = "software.amazon.awssdk", name = "auth", version.ref = "aws-sdk" }
 aws-url-connection-client = { group = "software.amazon.awssdk", name = "url-connection-client", version.ref = "aws-sdk" }

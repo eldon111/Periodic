@@ -12,7 +12,6 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.appconfigdata.AppConfigDataClient
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 import java.time.Duration
 import javax.inject.Singleton
 
@@ -32,27 +31,11 @@ object AwsConfig {
 
         if (accessKeyId.isEmpty() || secretAccessKey.isEmpty()) {
             throw IllegalStateException(
-                "AWS credentials not configured. Please set them using AwsCredentialManager.setCredentials()"
+                "AWS credentials not configured. Please set them in SharedPreferences."
             )
         }
 
         return AwsBasicCredentials.create(accessKeyId, secretAccessKey)
-    }
-
-    @Provides
-    @Singleton
-    fun provideBedrockRuntimeClient(credentials: AwsBasicCredentials): BedrockRuntimeClient {
-        val clientConfig = ClientOverrideConfiguration.builder()
-            .apiCallTimeout(Duration.ofMinutes(2))
-            .apiCallAttemptTimeout(Duration.ofSeconds(30))
-            .build()
-
-        return BedrockRuntimeClient.builder()
-            .region(Region.US_EAST_1)
-            .credentialsProvider(StaticCredentialsProvider.create(credentials))
-            .overrideConfiguration(clientConfig)
-            .httpClient(UrlConnectionHttpClient.builder().build())
-            .build()
     }
 
     @Provides

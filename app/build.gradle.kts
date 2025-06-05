@@ -21,8 +21,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Build config fields for AWS configuration
-        // Read AWS credentials from local.properties (which is gitignored)
+        // Build config fields for app configuration
         val localProperties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
@@ -30,16 +29,7 @@ android {
         }
 
         val environment = localProperties.getProperty("environment", "")
-
-        // AWS configuration with fallback to empty strings (will cause runtime error if not set)
-        val awsRegion = localProperties.getProperty("aws.region", "")
-        val awsAccessKeyId = localProperties.getProperty("aws.access_key_id", "")
-        val awsSecretAccessKey = localProperties.getProperty("aws.secret_access_key", "")
-
         buildConfigField("String", "ENVIRONMENT", "\"$environment\"")
-        buildConfigField("String", "AWS_REGION", "\"$awsRegion\"")
-        buildConfigField("String", "AWS_ACCESS_KEY_ID", "\"$awsAccessKeyId\"")
-        buildConfigField("String", "AWS_SECRET_ACCESS_KEY", "\"$awsSecretAccessKey\"")
     }
 
     buildTypes {
@@ -100,12 +90,7 @@ dependencies {
     implementation(libs.hilt)
     implementation(libs.androidx.hilt.work)
 
-    // AWS Bedrock dependencies
-    implementation(libs.aws.bedrock.runtime) {
-        exclude(group = "org.apache.httpcomponents", module = "httpclient")
-        exclude(group = "org.apache.httpcomponents", module = "httpcore")
-        exclude(group = "commons-logging", module = "commons-logging")
-    }
+    // AWS AppConfig dependencies
     implementation(libs.aws.core) {
         exclude(group = "org.apache.httpcomponents", module = "httpclient")
         exclude(group = "org.apache.httpcomponents", module = "httpcore")

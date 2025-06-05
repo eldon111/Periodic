@@ -18,7 +18,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.emathias.periodic.api.ScheduledItemApiService
 import com.emathias.periodic.db.dao.AppDatabase
-import com.emathias.periodic.service.AiEnhancedTodoService
+
 import com.emathias.periodic.ui.navigation.NavigationDrawerContent
 import com.emathias.periodic.ui.navigation.Screen
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemScreen
@@ -39,8 +39,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var scheduledItemApiService: ScheduledItemApiService
 
-    @Inject
-    lateinit var aiService: AiEnhancedTodoService
+
 
     @Suppress("UNCHECKED_CAST")
     private val scheduledItemViewModel by viewModels<ScheduledItemViewModel>(
