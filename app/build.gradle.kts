@@ -29,11 +29,14 @@ android {
             localProperties.load(localPropertiesFile.inputStream())
         }
 
+        val environment = localProperties.getProperty("environment", "")
+
         // AWS configuration with fallback to empty strings (will cause runtime error if not set)
         val awsRegion = localProperties.getProperty("aws.region", "")
         val awsAccessKeyId = localProperties.getProperty("aws.access_key_id", "")
         val awsSecretAccessKey = localProperties.getProperty("aws.secret_access_key", "")
 
+        buildConfigField("String", "ENVIRONMENT", "\"$environment\"")
         buildConfigField("String", "AWS_REGION", "\"$awsRegion\"")
         buildConfigField("String", "AWS_ACCESS_KEY_ID", "\"$awsAccessKeyId\"")
         buildConfigField("String", "AWS_SECRET_ACCESS_KEY", "\"$awsSecretAccessKey\"")

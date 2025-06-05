@@ -2,6 +2,7 @@ package com.emathias.periodic.config
 
 import android.content.Context
 import android.util.Log
+import com.emathias.periodic.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,7 +24,7 @@ class AppConfigService @Inject constructor(
         try {
             val request = StartConfigurationSessionRequest.builder()
                 .applicationIdentifier("periodic-app")
-                .environmentIdentifier(sharedPrefs.getString("environment", ""))
+                .environmentIdentifier(BuildConfig.ENVIRONMENT)
                 .configurationProfileIdentifier("api-config")
                 .build()
 
