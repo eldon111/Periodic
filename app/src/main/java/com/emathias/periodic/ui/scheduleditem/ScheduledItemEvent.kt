@@ -10,4 +10,5 @@ sealed interface ScheduledItemEvent {
     data class ShowConfirmDialog(val scheduledItem: ScheduledItem) : ScheduledItemEvent
     object HideConfirmDialog : ScheduledItemEvent
     data class ConfirmScheduledItem(val scheduledItem: ScheduledItem) : ScheduledItemEvent
+    object RefreshScheduledItems : ScheduledItemEvent
 }

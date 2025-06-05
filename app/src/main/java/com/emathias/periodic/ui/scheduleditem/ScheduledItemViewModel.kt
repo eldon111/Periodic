@@ -8,6 +8,7 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmSchedule
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.RefreshScheduledItems
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ShowAddDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ShowConfirmDialog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +61,10 @@ class ScheduledItemViewModel(
             is ConfirmScheduledItem -> viewModelScope.launch {
                 scheduledItemApiService.insertScheduledItem(event.scheduledItem)
                 onEvent(HideConfirmDialog)
+            }
+
+            RefreshScheduledItems -> {
+                scheduledItemApiService.refreshScheduledItems()
             }
         }
     }
