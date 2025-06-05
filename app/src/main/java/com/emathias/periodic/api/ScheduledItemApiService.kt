@@ -17,6 +17,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -50,7 +51,13 @@ class ScheduledItemApiService @Inject constructor(
                 val items = mutableListOf<ScheduledItem>()
 
                 for (i in 0 until jsonArray.length()) {
-                    items.add(scheduledItemJsonConverter.parseScheduledItem(jsonArray.getJSONObject(i)))
+                    items.add(
+                        scheduledItemJsonConverter.parseScheduledItem(
+                            jsonArray.getJSONObject(
+                                i
+                            )
+                        )
+                    )
                 }
                 emit(items)
             }
@@ -120,4 +127,39 @@ class ScheduledItemApiService @Inject constructor(
         }
         refreshScheduledItems()
     }
+
+    suspend fun generateScheduledItem(prompt: String): Result<ScheduledItem> =
+        withContext(Dispatchers.IO) {
+            try {
+                val baseUrl = getBaseUrl()
+                val currentZone = ZoneId.systemDefault()
+
+                val requestJson = JSONObject().apply {
+                    put("prompt", prompt)
+                    put("timezone", currentZone.id)
+                }
+
+                val requestBody = requestJson.toString().toRequestBody(contentType)
+
+                val request = Request.Builder()
+                    .url("$baseUrl/generate-scheduled-item")
+                    .post(requestBody)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        return@withContext Result.failure(Exception("API call failed with code ${response.code}"))
+                    }
+
+                    val body = response.body?.string() ?: return@withContext Result.failure(
+                        Exception("Empty response body")
+                    )
+                    val jsonResponse = JSONObject(body)
+                    val scheduledItem = scheduledItemJsonConverter.parseScheduledItem(jsonResponse)
+                    Result.success(scheduledItem)
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

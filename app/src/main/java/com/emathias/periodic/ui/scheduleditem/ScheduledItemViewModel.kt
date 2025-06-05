@@ -3,7 +3,6 @@ package com.emathias.periodic.ui.scheduleditem
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.api.ScheduledItemApiService
-import com.emathias.periodic.service.AiEnhancedTodoService
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 
 class ScheduledItemViewModel(
     private val scheduledItemApiService: ScheduledItemApiService,
-    private val aiService: AiEnhancedTodoService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScheduledItemState())
@@ -53,8 +51,8 @@ class ScheduledItemViewModel(
             }
 
             is GenerateItem -> viewModelScope.launch {
-                val jsonResult = aiService.generateScheduledItem(event.prompt).getOrThrow()
-                onEvent(ShowConfirmDialog(jsonResult))
+                val result = scheduledItemApiService.generateScheduledItem(event.prompt).getOrThrow()
+                onEvent(ShowConfirmDialog(result))
                 onEvent(HideAddDialog)
             }
 

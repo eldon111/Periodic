@@ -48,8 +48,7 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return ScheduledItemViewModel(
-                        scheduledItemApiService,
-                        aiService
+                        scheduledItemApiService
                     ) as T
                 }
             }
