@@ -2,9 +2,11 @@ package com.emathias.periodic.ui.scheduleditem
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.emathias.periodic.api.ScheduledItemApiService
+import com.emathias.periodic.db.dao.ScheduledItemDao
+import com.emathias.periodic.db.entities.ScheduledItem
+import com.emathias.periodic.util.CronUtils
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
-import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.RefreshScheduledItems
@@ -16,14 +18,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 class ScheduledItemViewModel(
-    private val scheduledItemApiService: ScheduledItemApiService,
+    private val scheduledItemDao: ScheduledItemDao,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ScheduledItemState())
     private val _scheduledItems =
-        scheduledItemApiService.getAllScheduledItems()
+        scheduledItemDao.getAll()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     val state = combine(_state, _scheduledItems) { state, scheduledItems ->
@@ -50,20 +53,26 @@ class ScheduledItemViewModel(
                 )
             }
 
-            is GenerateItem -> viewModelScope.launch {
-                val result = scheduledItemApiService.generateScheduledItem(event.prompt).getOrThrow()
-                onEvent(ShowConfirmDialog(result))
+            is CreateItem -> {
+                val cron = event.cron.trim().takeIf { it.isNotEmpty() }
+                    ?.let { CronUtils.parseCronExpression(it) }
+                val item = ScheduledItem(
+                    title = event.title.trim(),
+                    description = event.description.trim().ifEmpty { event.title.trim() },
+                    startsAt = Instant.now(),
+                    repeats = cron != null,
+                    cronExpression = cron,
+                )
+                onEvent(ShowConfirmDialog(item))
                 onEvent(HideAddDialog)
             }
 
             is ConfirmScheduledItem -> viewModelScope.launch {
-                scheduledItemApiService.insertScheduledItem(event.scheduledItem)
+                scheduledItemDao.insert(event.scheduledItem)
                 onEvent(HideConfirmDialog)
             }
 
-            RefreshScheduledItems -> {
-                scheduledItemApiService.refreshScheduledItems()
-            }
+            RefreshScheduledItems -> Unit
         }
     }
 }

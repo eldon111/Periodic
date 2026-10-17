@@ -21,12 +21,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
-import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.GenerateItem
+import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 
 @Composable
 fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
-    var prompt by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var cron by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
@@ -46,16 +49,30 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     modifier = Modifier.padding(16.dp),
                 )
                 TextField(
-                    value = prompt,
-                    singleLine = false,
-                    onValueChange = { prompt = it },
-                    label = { Text("Item description") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                    value = title,
+                    singleLine = true,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                )
+                TextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                TextField(
+                    value = cron,
+                    singleLine = true,
+                    onValueChange = { cron = it },
+                    label = { Text("Repeat cron (optional, e.g. 0 9 * * 1)") },
+                    isError = cron.isNotBlank() && !CronUtils.isValidCronExpression(cron.trim()),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 )
                 Button(
-                    onClick = { onEvent(GenerateItem(prompt)) },
+                    onClick = { onEvent(CreateItem(title, description, cron)) },
+                    enabled = title.isNotBlank() &&
+                        (cron.isBlank() || CronUtils.isValidCronExpression(cron.trim())),
                     modifier = Modifier.padding(16.dp),
                 ) {
                     Text("Create")

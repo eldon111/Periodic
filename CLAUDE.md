@@ -59,8 +59,7 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 - **Database**: Room with entities, DAOs, and type converters
 - **UI**: Jetpack Compose with Material3, MVVM pattern
 - **Background Processing**: WorkManager with cron-based scheduling
-- **API Layer**: OkHttp-based service communicating with localhost:8080 backend
-- **AI Integration**: Amazon Bedrock for natural language processing
+- **Storage**: Fully local (Room/SQLite); no backend or network dependency (MVP)
 
 ### Key Data Flow
 1. **Scheduled Items**: Created via AI or manual input, stored with cron expressions

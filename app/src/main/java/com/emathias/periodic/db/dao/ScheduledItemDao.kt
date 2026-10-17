@@ -1,6 +1,7 @@
 package com.emathias.periodic.db.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -16,6 +17,9 @@ interface ScheduledItemDao {
 
     @Update
     suspend fun update(scheduledItem: ScheduledItem)
+
+    @Delete
+    suspend fun delete(scheduledItem: ScheduledItem)
 
     @Query("SELECT * FROM ScheduledItem")
     fun getAll(): Flow<List<ScheduledItem>>

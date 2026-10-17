@@ -16,8 +16,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.emathias.periodic.api.ScheduledItemApiService
 import com.emathias.periodic.db.dao.AppDatabase
+import com.emathias.periodic.db.dao.ScheduledItemDao
 
 import com.emathias.periodic.ui.navigation.NavigationDrawerContent
 import com.emathias.periodic.ui.navigation.Screen
@@ -37,9 +37,7 @@ class MainActivity : ComponentActivity() {
     lateinit var db: AppDatabase
 
     @Inject
-    lateinit var scheduledItemApiService: ScheduledItemApiService
-
-
+    lateinit var scheduledItemDao: ScheduledItemDao
 
     @Suppress("UNCHECKED_CAST")
     private val scheduledItemViewModel by viewModels<ScheduledItemViewModel>(
@@ -47,7 +45,7 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return ScheduledItemViewModel(
-                        scheduledItemApiService
+                        scheduledItemDao
                     ) as T
                 }
             }
