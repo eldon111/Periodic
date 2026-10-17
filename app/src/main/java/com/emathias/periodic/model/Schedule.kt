@@ -101,8 +101,10 @@ data class Schedule(
         }
 
         private fun parseDtStart(line: String): ZonedDateTime? = try {
-            val (params, value) = line.substringAfter("DTSTART").split(":", limit = 2)
-                .let { it[0] to it.getOrNull(1) }
+            val dtStart = line.substringAfter("DTSTART")
+            val separator = dtStart.lastIndexOf(':')
+            val params = dtStart.substring(0, separator)
+            val value = dtStart.substring(separator + 1).takeIf { separator >= 0 }
             if (value == null) {
                 null
             } else if (value.endsWith("Z")) {

@@ -37,6 +37,16 @@ class ScheduleTest {
     }
 
     @Test
+    fun serializeAndParse_roundTripsZoneIdsContainingColons() {
+        listOf("+05:30", "GMT+05:30").forEach { zoneId ->
+            val original = Schedule(
+                ZonedDateTime.of(LocalDateTime.of(2024, 1, 1, 9, 0), ZoneId.of(zoneId))
+            )
+            assertEquals(original, Schedule.parse(original.serialize()))
+        }
+    }
+
+    @Test
     fun parse_oneTimeAndInvalid() {
         val once = Schedule.parse("DTSTART;TZID=America/New_York:20240101T090000")
         assertNotNull(once)
