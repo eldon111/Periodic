@@ -41,6 +41,10 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -90,9 +94,10 @@ dependencies {
     implementation(libs.hilt)
     implementation(libs.androidx.hilt.work)
 
-    implementation(libs.cron.utils)
+    implementation(libs.lib.recur)
 
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20250107")
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 
@@ -29,7 +29,7 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
 fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var cron by remember { mutableStateOf("") }
+    var rrule by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
@@ -62,17 +62,17 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 )
                 TextField(
-                    value = cron,
+                    value = rrule,
                     singleLine = true,
-                    onValueChange = { cron = it },
-                    label = { Text("Repeat cron (optional, e.g. 0 9 * * 1)") },
-                    isError = cron.isNotBlank() && !CronUtils.isValidCronExpression(cron.trim()),
+                    onValueChange = { rrule = it },
+                    label = { Text("Repeat RRULE (optional, e.g. FREQ=WEEKLY;INTERVAL=2;BYDAY=MO)") },
+                    isError = rrule.isNotBlank() && !Schedule.isValidRule(rrule.trim().removePrefix("RRULE:")),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 )
                 Button(
-                    onClick = { onEvent(CreateItem(title, description, cron)) },
+                    onClick = { onEvent(CreateItem(title, description, rrule)) },
                     enabled = title.isNotBlank() &&
-                        (cron.isBlank() || CronUtils.isValidCronExpression(cron.trim())),
+                        (rrule.isBlank() || Schedule.isValidRule(rrule.trim().removePrefix("RRULE:"))),
                     modifier = Modifier.padding(16.dp),
                 ) {
                     Text("Create")

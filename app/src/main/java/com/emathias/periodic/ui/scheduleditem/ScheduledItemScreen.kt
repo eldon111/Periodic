@@ -30,7 +30,8 @@ import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
+import com.emathias.periodic.util.RecurrenceFormatter
 import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -141,13 +142,11 @@ fun ScheduledItemInfoBox(
                         contentDescription = "Repeating",
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    scheduledItem.cronExpression?.let { cron ->
-                        Text(
-                            text = CronUtils.formatCronExpression(cron),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    Text(
+                        text = RecurrenceFormatter.describe(scheduledItem.schedule),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
@@ -178,16 +177,13 @@ fun ScheduledItemScreenPreview() {
                     Random.nextLong(),
                     "Pick up kid from school",
                     "desc",
-                    Instant.now(),
-                    repeats = true,
-                    cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
+                    Schedule.of(Instant.now(), "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR")!!,
                 ),
                 ScheduledItem(
                     Random.nextLong(),
                     "Pick up dry cleaning",
                     "desc",
-                    OffsetDateTime.now().plusDays(1).toInstant(),
-                    repeats = false,
+                    Schedule.oneTime(OffsetDateTime.now().plusDays(1).toInstant()),
                 ),
             )
         ),

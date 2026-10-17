@@ -4,84 +4,77 @@ import com.emathias.periodic.db.dao.FakeScheduledItemDao
 import com.emathias.periodic.db.dao.FakeScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.FakeTodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 class ScheduledItemProcessorTest {
 
-    val now: OffsetDateTime = OffsetDateTime.now()
-    val mostRecentHour: OffsetDateTime = now.withMinute(0).withSecond(0).withNano(0)
-    val oneHourAgo: OffsetDateTime = mostRecentHour.minusHours(1)
-    val twoHoursAgo: OffsetDateTime = mostRecentHour.minusHours(2)
-    val threeHoursAgo: OffsetDateTime = mostRecentHour.minusHours(3)
+    private val now: Instant = Instant.now().truncatedTo(ChronoUnit.SECONDS)
 
-    val hourlyItem = ScheduledItem(
+    // Daily item whose most recent occurrence was one hour ago and next one is ~23 hours away.
+    private val start: Instant = now.minus(3, ChronoUnit.DAYS).minus(1, ChronoUnit.HOURS)
+    private val mostRecentOccurrence: Instant = now.minus(1, ChronoUnit.HOURS)
+
+    private val dailyItem = ScheduledItem(
         id = Random.nextLong(),
-        title = "hourly item",
-        description = "hourly item",
-        startsAt = now.toInstant(),
-        repeats = true,
-        cronExpression = CronUtils.parseCronExpression("0 * * * *"),
+        title = "daily item",
+        description = "daily item",
+        schedule = Schedule.of(start, "FREQ=DAILY")!!,
     )
 
-    lateinit var processor: ScheduledItemProcessor
+    private lateinit var processor: ScheduledItemProcessor
 
     @Before
     fun before() {
-        processor =
-            ScheduledItemProcessor(
-                FakeScheduledItemDao,
-                FakeScheduledItemHistoryDao,
-                FakeTodoItemDao
-            )
+        processor = ScheduledItemProcessor(
+            FakeScheduledItemDao,
+            FakeScheduledItemHistoryDao,
+            FakeTodoItemDao
+        )
     }
 
     @Test
     fun itFindsNextProcessTime() {
-        val result = processor.findNextProcessTime(
-            hourlyItem,
-            twoHoursAgo.toInstant(),
-            twoHoursAgo.toInstant()
-        )
+        val cutoff = mostRecentOccurrence.minus(2, ChronoUnit.HOURS)
+        val result = processor.findNextProcessTime(dailyItem, cutoff, cutoff)
 
-        Assert.assertNotNull(result)
-        Assert.assertEquals(oneHourAgo.toInstant(), result)
+        Assert.assertEquals(mostRecentOccurrence, result)
     }
 
     @Test
-    fun itFindsNextProcessTimeMoreRecent() {
+    fun itFindsNextProcessTimeUsingMoreRecentProcessTime() {
         val result = processor.findNextProcessTime(
-            hourlyItem,
-            oneHourAgo.toInstant(),
-            oneHourAgo.toInstant()
+            dailyItem,
+            now.minus(10, ChronoUnit.DAYS),
+            mostRecentOccurrence.minus(1, ChronoUnit.DAYS).plusSeconds(1),
         )
 
-        Assert.assertNotNull(result)
-        Assert.assertEquals(mostRecentHour.toInstant(), result)
+        Assert.assertEquals(mostRecentOccurrence, result)
     }
 
     @Test
-    fun itFindsNextProcessTimeOlder() {
+    fun itFindsNextProcessTimeUsingMoreRecentSince() {
+        val since = mostRecentOccurrence.minus(1, ChronoUnit.DAYS).plusSeconds(1)
         val result = processor.findNextProcessTime(
-            hourlyItem,
-            threeHoursAgo.toInstant(),
-            twoHoursAgo.toInstant()
+            dailyItem,
+            since,
+            now.minus(10, ChronoUnit.DAYS),
         )
 
-        Assert.assertNotNull(result)
-        Assert.assertEquals(oneHourAgo.toInstant(), result)
+        Assert.assertEquals(mostRecentOccurrence, result)
     }
 
     @Test
     fun itDoesNotFindProcessTimeIfAlreadyProcessedRecently() {
         val result = processor.findNextProcessTime(
-            hourlyItem,
-            threeHoursAgo.toInstant(),
-            mostRecentHour.toInstant()
+            dailyItem,
+            now.minus(3, ChronoUnit.DAYS),
+            mostRecentOccurrence,
         )
 
         Assert.assertNull(result)
@@ -89,13 +82,28 @@ class ScheduledItemProcessorTest {
 
     @Test
     fun itDoesNotFindProcessTimeIfCutoffIsTooRecent() {
+        val result = processor.findNextProcessTime(dailyItem, now, mostRecentOccurrence.minusSeconds(5))
+
+        Assert.assertNull(result)
+    }
+
+    @Test
+    fun itDoesNotFindProcessTimeAfterUntil() {
+        val item = dailyItem.copy(
+            schedule = Schedule.of(
+                start,
+                "FREQ=DAILY;UNTIL=" + java.time.format.DateTimeFormatter
+                    .ofPattern("yyyyMMdd'T'HHmmss'Z'")
+                    .withZone(java.time.ZoneOffset.UTC)
+                    .format(mostRecentOccurrence.minus(1, ChronoUnit.HOURS)),
+            )!!
+        )
         val result = processor.findNextProcessTime(
-            hourlyItem,
-            now.toInstant(),
-            twoHoursAgo.toInstant()
+            item,
+            mostRecentOccurrence.minusSeconds(60),
+            mostRecentOccurrence.minusSeconds(60),
         )
 
         Assert.assertNull(result)
     }
 }
-

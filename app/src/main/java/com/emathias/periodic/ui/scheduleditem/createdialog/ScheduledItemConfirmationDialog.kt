@@ -29,7 +29,8 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemState
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
+import com.emathias.periodic.util.RecurrenceFormatter
 import com.emathias.periodic.util.DateTimeUtils
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -45,7 +46,7 @@ fun ScheduledItemConfirmationDialog(
             state.pendingScheduledItem ?: ScheduledItem(
                 title = "",
                 description = "",
-                startsAt = Instant.now()
+                schedule = Schedule.oneTime(Instant.now())
             )
         )
     }
@@ -95,7 +96,11 @@ fun ScheduledItemConfirmationDialog(
                         .toggleable(
                             value = pendingScheduledItem.repeats,
                             onValueChange = {
-                                pendingScheduledItem = pendingScheduledItem.copy(repeats = it)
+                                pendingScheduledItem = pendingScheduledItem.copy(
+                                    schedule = pendingScheduledItem.schedule.copy(
+                                        rrule = if (it) "FREQ=DAILY" else null
+                                    )
+                                )
                             },
                             role = Role.Checkbox
                         )
@@ -121,9 +126,7 @@ fun ScheduledItemConfirmationDialog(
                             .padding(horizontal = 16.dp),
                     )
                     TextField(
-                        value = pendingScheduledItem.cronExpression
-                            ?.let { CronUtils.formatCronExpression(it) }
-                            ?: "unknown",
+                        value = RecurrenceFormatter.describe(pendingScheduledItem.schedule),
                         singleLine = false,
 //                        onValueChange = { pendingScheduledItem = pendingScheduledItem.copy(description = it) },
                         onValueChange = { },
@@ -178,10 +181,10 @@ fun ScheduledItemConfirmationDialogPreview() {
                     Random.nextLong(),
                     "Pick up kid from school",
                     "desc",
-                    OffsetDateTime.now().plusDays(3).toInstant(),
-                    repeats = true,
-                    cronExpression = CronUtils.parseCronExpression("20 13 * * 1-5"), // Every weekday at 1:20 PM
-                    expiration = OffsetDateTime.now().plusMonths(6).toInstant(),
+                    Schedule.of(
+                        OffsetDateTime.now().plusDays(3).toInstant(),
+                        "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;COUNT=10",
+                    )!!,
                 )
 
         )

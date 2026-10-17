@@ -58,17 +58,17 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 - **Dependency Injection**: Hilt for all components
 - **Database**: Room with entities, DAOs, and type converters
 - **UI**: Jetpack Compose with Material3, MVVM pattern
-- **Background Processing**: WorkManager with cron-based scheduling
+- **Background Processing**: WorkManager with RRULE-based scheduling
 - **Storage**: Fully local (Room/SQLite); no backend or network dependency (MVP)
 
 ### Key Data Flow
-1. **Scheduled Items**: Created via AI or manual input, stored with cron expressions
+1. **Scheduled Items**: Created via AI or manual input, stored with an iCalendar-style `Schedule` (DTSTART + RRULE)
 2. **Background Processing**: `ScheduledItemWorker` runs every 15 minutes, processes due items
 3. **Todo Generation**: Scheduled items automatically create todo items when executed
 4. **History Tracking**: Execution history prevents duplicate processing
 
 ### Main Entities
-- `ScheduledItem`: Core scheduling entity with cron expressions
+- `ScheduledItem`: Core scheduling entity with an iCalendar-style `Schedule` (DTSTART + RRULE)
 - `TodoItem`: Simple todos generated from scheduled items  
 - `ScheduledItemHistory`: Tracks individual item executions
 - `ScheduledItemProcessHistory`: Tracks overall processing runs
@@ -92,10 +92,10 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 
 ## Development Notes
 
-### Cron Expression Handling
-- Uses `cron-utils` library with Unix 5-field format
-- Type converters handle Room database storage
-- `ExecutionTime` calculates next occurrence from `startsAt` timestamp
+### Recurrence Handling
+- Uses `lib-recur` (RFC 5545 RRULE); `Schedule` serializes as `DTSTART;TZID=...:...\nRRULE:...`
+- `ScheduleConverter` handles Room storage; end date/count live in the RRULE (UNTIL/COUNT)
+- `RecurrenceFormatter` produces human-readable text for a supported subset, else "Custom repeat"
 
 ### Background Processing
 - WorkManager integration with Hilt dependency injection

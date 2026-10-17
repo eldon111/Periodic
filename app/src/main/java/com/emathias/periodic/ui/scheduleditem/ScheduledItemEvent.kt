@@ -9,7 +9,7 @@ sealed interface ScheduledItemEvent {
     data class CreateItem(
         val title: String,
         val description: String,
-        val cron: String,
+        val rrule: String,
     ) : ScheduledItemEvent
     data class ShowConfirmDialog(val scheduledItem: ScheduledItem) : ScheduledItemEvent
     object HideConfirmDialog : ScheduledItemEvent

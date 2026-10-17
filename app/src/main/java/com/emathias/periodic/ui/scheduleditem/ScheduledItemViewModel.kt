@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
@@ -54,14 +54,12 @@ class ScheduledItemViewModel(
             }
 
             is CreateItem -> {
-                val cron = event.cron.trim().takeIf { it.isNotEmpty() }
-                    ?.let { CronUtils.parseCronExpression(it) }
+                val schedule = Schedule.of(Instant.now(), event.rrule)
+                    ?: Schedule.oneTime(Instant.now())
                 val item = ScheduledItem(
                     title = event.title.trim(),
                     description = event.description.trim().ifEmpty { event.title.trim() },
-                    startsAt = Instant.now(),
-                    repeats = cron != null,
-                    cronExpression = cron,
+                    schedule = schedule,
                 )
                 onEvent(ShowConfirmDialog(item))
                 onEvent(HideAddDialog)
