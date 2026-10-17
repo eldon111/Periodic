@@ -7,6 +7,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -50,6 +51,12 @@ class ScheduleTest {
         assertEquals(at(2024, 1, 15), s.nextOccurrence(at(2024, 1, 1)))
         assertEquals(at(2024, 1, 15), s.nextOccurrence(at(2024, 1, 10)))
         assertEquals(at(2024, 1, 29), s.nextOccurrence(at(2024, 1, 15)))
+    }
+
+    @Test
+    fun nextOccurrence_beforeStartDoesNotFastForward() {
+        val s = schedule("FREQ=DAILY")
+        assertEquals(start.toInstant(), s.nextOccurrence(Instant.MIN))
     }
 
     @Test

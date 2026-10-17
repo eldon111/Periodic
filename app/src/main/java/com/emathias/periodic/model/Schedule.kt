@@ -47,7 +47,9 @@ data class Schedule(
         }
         val dtStart = start.toLibDateTime()
         val iterator = rule.iterator(dtStart)
-        iterator.fastForward(DateTime(dtStart.timeZone, after.toEpochMilli()))
+        if (!after.isBefore(start.toInstant())) {
+            iterator.fastForward(DateTime(dtStart.timeZone, after.toEpochMilli()))
+        }
         while (iterator.hasNext()) {
             val candidate = Instant.ofEpochMilli(iterator.nextMillis())
             if (candidate.isAfter(after)) return candidate
