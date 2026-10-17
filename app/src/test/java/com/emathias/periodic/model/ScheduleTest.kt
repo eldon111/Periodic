@@ -1,5 +1,6 @@
 package com.emathias.periodic.model
 
+import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.util.RecurrenceFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -67,6 +68,20 @@ class ScheduleTest {
     fun nextOccurrence_beforeStartDoesNotFastForward() {
         val s = schedule("FREQ=DAILY")
         assertEquals(start.toInstant(), s.nextOccurrence(Instant.MIN))
+    }
+
+    @Test
+    fun firstOccurrence_usesFirstOccurrenceGeneratedByRule() {
+        val saturday = ZonedDateTime.of(LocalDateTime.of(2024, 1, 6, 9, 0), zone)
+        val s = Schedule(saturday, "FREQ=WEEKLY;BYDAY=MO;COUNT=1")
+
+        assertEquals(at(2024, 1, 8), s.firstOccurrence)
+        assertEquals(at(2024, 1, 8), s.nextOccurrence(Instant.MIN))
+        assertNull(s.nextOccurrence(at(2024, 1, 8)))
+        assertEquals(
+            saturday.toInstant(),
+            ScheduledItem(title = "Test", description = "Test", schedule = s).startsAt
+        )
     }
 
     @Test

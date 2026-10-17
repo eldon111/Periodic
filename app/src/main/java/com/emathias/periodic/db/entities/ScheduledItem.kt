@@ -14,7 +14,7 @@ data class ScheduledItem(
     val schedule: Schedule,
 ) {
     @get:Ignore
-    val startsAt: Instant get() = schedule.firstOccurrence
+    val startsAt: Instant get() = schedule.start.toInstant()
 
     @get:Ignore
     val repeats: Boolean get() = schedule.repeats
