@@ -133,5 +133,12 @@ class ScheduleTest {
         fun d(rule: String) = RecurrenceFormatter.describe(schedule(rule))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=HOURLY"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=MONTHLY;BYDAY=MO,TU;BYSETPOS=-1"))
+        assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;RSCALE=ISLAMIC-CIVIL"))
+        assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=BACKWARD"))
+        assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=FORWARD"))
+        assertEquals(
+            "Every year on January 1 at 9:00 AM",
+            d("FREQ=YEARLY;RSCALE=GREGORIAN;SKIP=OMIT")
+        )
     }
 }

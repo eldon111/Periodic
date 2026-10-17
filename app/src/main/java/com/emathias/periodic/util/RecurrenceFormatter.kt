@@ -5,6 +5,7 @@ import org.dmfs.rfc5545.Weekday
 import org.dmfs.rfc5545.recur.Freq
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.dmfs.rfc5545.recur.RecurrenceRule.Part
+import org.dmfs.rfc5545.recur.RecurrenceRule.Skip
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -38,6 +39,7 @@ object RecurrenceFormatter {
             return "Once on ${schedule.start.toLocalDate().format(DATE_FORMAT)} at $time"
         }
         if (rule == null) return CUSTOM
+        if (rule.skip != Skip.OMIT || schedule.rrule.hasNonGregorianScale()) return CUSTOM
         val base = describeRule(rule, schedule.start.toLocalDate()) ?: return CUSTOM
         val ending = when {
             rule.count != null -> ", ${rule.count} ${if (rule.count == 1) "time" else "times"}"
@@ -113,6 +115,17 @@ object RecurrenceFormatter {
 
             else -> null
         }
+    }
+
+    private fun String.hasNonGregorianScale(): Boolean {
+        val scale = split(';')
+            .mapNotNull { part ->
+                part.split('=', limit = 2).takeIf { it.size == 2 }
+                    ?.let { it[0].trim().uppercase(Locale.US) to it[1].trim().uppercase(Locale.US) }
+            }
+            .firstOrNull { it.first == "RSCALE" }
+            ?.second
+        return scale != null && scale != "GREGORIAN"
     }
 
     private fun every(interval: Int, unit: String) = when (interval) {
