@@ -50,6 +50,7 @@ fun ScheduledItemConfirmationDialog(
             )
         )
     }
+    val originalRrule = remember { pendingScheduledItem.schedule.rrule }
 
     Dialog(onDismissRequest = { onEvent(HideConfirmDialog) }) {
         Card(
@@ -98,7 +99,7 @@ fun ScheduledItemConfirmationDialog(
                             onValueChange = {
                                 pendingScheduledItem = pendingScheduledItem.copy(
                                     schedule = pendingScheduledItem.schedule.copy(
-                                        rrule = if (it) "FREQ=DAILY" else null
+                                        rrule = if (it) originalRrule ?: "FREQ=DAILY" else null
                                     )
                                 )
                             },
