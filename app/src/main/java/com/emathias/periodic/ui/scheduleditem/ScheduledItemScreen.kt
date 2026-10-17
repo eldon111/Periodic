@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.model.Schedule
@@ -71,8 +70,6 @@ fun ScheduledItemScreen(
         )
         if (state.showingAddDialog) {
             ScheduledItemCreationDialog(onEvent)
-        } else if (state.showingConfirmDialog) {
-            ScheduledItemConfirmationDialog(state, onEvent)
         }
     }
 }

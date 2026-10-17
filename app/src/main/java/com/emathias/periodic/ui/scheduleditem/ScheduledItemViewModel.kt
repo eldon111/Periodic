@@ -5,20 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.model.Schedule
-import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ConfirmScheduledItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
-import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideConfirmDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.RefreshScheduledItems
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ShowAddDialog
-import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.ShowConfirmDialog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Instant
+import java.time.ZoneId
 
 class ScheduledItemViewModel(
     private val scheduledItemDao: ScheduledItemDao,
@@ -39,35 +36,18 @@ class ScheduledItemViewModel(
 
             HideAddDialog -> _state.update { it.copy(showingAddDialog = false) }
 
-            is ShowConfirmDialog -> _state.update {
-                it.copy(
-                    showingConfirmDialog = true,
-                    pendingScheduledItem = event.scheduledItem,
+            is CreateItem -> viewModelScope.launch {
+                val zone = ZoneId.systemDefault()
+                val start = event.startDate.atStartOfDay(zone)
+                val schedule = Schedule(start, event.repetition?.toRrule(event.startDate, zone))
+                scheduledItemDao.insert(
+                    ScheduledItem(
+                        title = event.title.trim(),
+                        description = event.description.trim().ifEmpty { event.title.trim() },
+                        schedule = schedule,
+                    )
                 )
-            }
-
-            HideConfirmDialog -> _state.update {
-                it.copy(
-                    showingConfirmDialog = false,
-                    pendingScheduledItem = null,
-                )
-            }
-
-            is CreateItem -> {
-                val schedule = Schedule.of(Instant.now(), event.rrule)
-                    ?: Schedule.oneTime(Instant.now())
-                val item = ScheduledItem(
-                    title = event.title.trim(),
-                    description = event.description.trim().ifEmpty { event.title.trim() },
-                    schedule = schedule,
-                )
-                onEvent(ShowConfirmDialog(item))
                 onEvent(HideAddDialog)
-            }
-
-            is ConfirmScheduledItem -> viewModelScope.launch {
-                scheduledItemDao.insert(event.scheduledItem)
-                onEvent(HideConfirmDialog)
             }
 
             RefreshScheduledItems -> Unit

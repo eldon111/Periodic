@@ -1,6 +1,7 @@
 package com.emathias.periodic.ui.scheduleditem
 
-import com.emathias.periodic.db.entities.ScheduledItem
+import com.emathias.periodic.model.Repetition
+import java.time.LocalDate
 
 sealed interface ScheduledItemEvent {
     object ShowAddDialog : ScheduledItemEvent
@@ -9,10 +10,8 @@ sealed interface ScheduledItemEvent {
     data class CreateItem(
         val title: String,
         val description: String,
-        val rrule: String,
+        val startDate: LocalDate,
+        val repetition: Repetition?,
     ) : ScheduledItemEvent
-    data class ShowConfirmDialog(val scheduledItem: ScheduledItem) : ScheduledItemEvent
-    object HideConfirmDialog : ScheduledItemEvent
-    data class ConfirmScheduledItem(val scheduledItem: ScheduledItem) : ScheduledItemEvent
     object RefreshScheduledItems : ScheduledItemEvent
 }
