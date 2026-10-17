@@ -1,9 +1,9 @@
 package com.emathias.periodic.db.entities
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import com.cronutils.model.Cron
-import com.emathias.periodic.util.DateTimeUtils
+import com.emathias.periodic.model.Schedule
 import java.time.Instant
 
 @Entity
@@ -11,13 +11,17 @@ data class ScheduledItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
     val description: String,
-    val startsAt: Instant,
-    val repeats: Boolean = false,
-    val cronExpression: Cron? = null,
-    val expiration: Instant? = null,
+    val schedule: Schedule,
 ) {
-    val firstOccurrence: Instant by lazy {
-        DateTimeUtils.getFirstOccurrence(startsAt, cronExpression)
-    }
-}
+    @get:Ignore
+    val startsAt: Instant get() = schedule.start.toInstant()
 
+    @get:Ignore
+    val repeats: Boolean get() = schedule.repeats
+
+    @get:Ignore
+    val expiration: Instant? get() = schedule.until
+
+    @get:Ignore
+    val firstOccurrence: Instant get() = schedule.firstOccurrence
+}

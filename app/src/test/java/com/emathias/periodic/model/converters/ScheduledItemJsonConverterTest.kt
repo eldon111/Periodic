@@ -1,17 +1,15 @@
 package com.emathias.periodic.model.converters
 
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.util.CronUtils
+import com.emathias.periodic.model.Schedule
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.Instant
 
 class ScheduledItemJsonConverterTest {
 
@@ -23,161 +21,60 @@ class ScheduledItemJsonConverterTest {
     }
 
     @Test
-    fun parseScheduledItem_withCompleteData_parsesCorrectly() {
+    fun parseScheduledItem_withRule_parsesCorrectly() {
         val json = JSONObject().apply {
             put("title", "Test Task")
-            put("startsAt", "2024-01-15T10:30:00")
-            put("repeats", true)
-            put("cronExpression", "0 30 10 * * ?")
-            put("expiration", "2024-12-31T23:59:59")
+            put("startsAt", "2024-01-15T10:30:00Z")
+            put("rrule", "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;UNTIL=20241231T235959Z")
         }
 
         val result = converter.parseScheduledItem(json)
 
         assertEquals("Test Task", result.title)
-        assertEquals("", result.description)
         assertTrue(result.repeats)
-        assertNotNull(result.cronExpression)
-        assertNotNull(result.expiration)
-
-        val expectedStartsAt = LocalDateTime.parse("2024-01-15T10:30:00")
-            .atZone(ZoneId.systemDefault()).toInstant()
-        assertEquals(expectedStartsAt, result.startsAt)
-
-        val expectedExpiration = LocalDateTime.parse("2024-12-31T23:59:59")
-            .atZone(ZoneId.systemDefault()).toInstant()
-        assertEquals(expectedExpiration, result.expiration)
+        assertEquals(Instant.parse("2024-01-15T10:30:00Z"), result.startsAt)
+        assertEquals(Instant.parse("2024-12-31T23:59:59Z"), result.expiration)
     }
 
     @Test
-    fun parseScheduledItem_withNullOptionalFields_parsesCorrectly() {
+    fun parseScheduledItem_withoutRule_isOneTime() {
         val json = JSONObject().apply {
             put("title", "Simple Task")
-            put("startsAt", "2024-01-15T10:30:00")
-            put("repeats", false)
-            put("cronExpression", JSONObject.NULL)
-            put("expiration", JSONObject.NULL)
+            put("startsAt", "2024-01-15T10:30:00Z")
+            put("rrule", JSONObject.NULL)
         }
 
         val result = converter.parseScheduledItem(json)
 
-        assertEquals("Simple Task", result.title)
-        assertEquals("", result.description)
         assertFalse(result.repeats)
-        assertNull(result.cronExpression)
         assertNull(result.expiration)
     }
 
     @Test
-    fun parseScheduledItem_withInvalidCronExpression_setsNullCronExpression() {
+    fun parseScheduledItem_withInvalidRule_fallsBackToOneTime() {
         val json = JSONObject().apply {
-            put("title", "Invalid Cron Task")
-            put("startsAt", "2024-01-15T10:30:00")
-            put("repeats", true)
-            put("cronExpression", "invalid cron")
-            put("expiration", JSONObject.NULL)
+            put("title", "Bad")
+            put("startsAt", "2024-01-15T10:30:00Z")
+            put("rrule", "invalid")
         }
 
-        val result = converter.parseScheduledItem(json)
-
-        assertEquals("Invalid Cron Task", result.title)
-        assertTrue(result.repeats)
-        assertNull(result.cronExpression)
+        assertFalse(converter.parseScheduledItem(json).repeats)
     }
 
     @Test
-    fun scheduledItemToJson_withCompleteData_convertsCorrectly() {
-        val cronExpression = CronUtils.parseCronExpression("0 30 10 * * ?")
-        val startsAt = LocalDateTime.parse("2024-01-15T10:30:00")
-            .atZone(ZoneId.systemDefault()).toInstant()
-        val expiration = LocalDateTime.parse("2024-12-31T23:59:59")
-            .atZone(ZoneId.systemDefault()).toInstant()
-
-        val scheduledItem = ScheduledItem(
-            id = 1L,
-            title = "Test Task",
-            description = "Test Description",
-            startsAt = startsAt,
-            repeats = true,
-            cronExpression = cronExpression,
-            expiration = expiration
+    fun roundTrip_preservesData() {
+        val item = ScheduledItem(
+            title = "Test",
+            description = "desc",
+            schedule = Schedule.of(Instant.parse("2024-01-15T10:30:00Z"), "FREQ=MONTHLY;BYDAY=2TU;COUNT=5")!!,
         )
 
-        val result = converter.scheduledItemToJson(scheduledItem)
+        val json = converter.scheduledItemToJson(item)
+        val parsed = converter.parseScheduledItem(json)
 
-        assertEquals("Test Task", result.getString("title"))
-        assertEquals("Test Description", result.getString("description"))
-        assertEquals("2024-01-15T10:30:00", result.getString("startsAt"))
-        assertTrue(result.getBoolean("repeats"))
-        assertEquals("0 30 10 * * ?", result.getString("cronExpression"))
-        assertEquals("2024-12-31T23:59:59", result.getString("expiration"))
-    }
-
-    @Test
-    fun scheduledItemToJson_withNullOptionalFields_convertsCorrectly() {
-        val startsAt = LocalDateTime.parse("2024-01-15T10:30:00")
-            .atZone(ZoneId.systemDefault()).toInstant()
-
-        val scheduledItem = ScheduledItem(
-            id = 1L,
-            title = "Simple Task",
-            description = "",
-            startsAt = startsAt,
-            repeats = false,
-            cronExpression = null,
-            expiration = null
-        )
-
-        val result = converter.scheduledItemToJson(scheduledItem)
-
-        assertEquals("Simple Task", result.getString("title"))
-        assertEquals("", result.getString("description"))
-        assertEquals("2024-01-15T10:30:00", result.getString("startsAt"))
-        assertFalse(result.getBoolean("repeats"))
-        assertTrue(result.isNull("cronExpression"))
-        assertTrue(result.isNull("expiration"))
-    }
-
-    @Test
-    fun roundTripConversion_preservesData() {
-        val originalJson = JSONObject().apply {
-            put("title", "Round Trip Task")
-            put("startsAt", "2024-01-15T10:30:00")
-            put("repeats", true)
-            put("cronExpression", "0 30 10 * * ?")
-            put("expiration", "2024-12-31T23:59:59")
-        }
-
-        val scheduledItem = converter.parseScheduledItem(originalJson)
-        val convertedJson = converter.scheduledItemToJson(scheduledItem)
-
-        assertEquals(originalJson.getString("title"), convertedJson.getString("title"))
-        assertEquals(originalJson.getString("startsAt"), convertedJson.getString("startsAt"))
-        assertEquals(originalJson.getBoolean("repeats"), convertedJson.getBoolean("repeats"))
-        assertEquals(
-            originalJson.getString("cronExpression"),
-            convertedJson.getString("cronExpression")
-        )
-        assertEquals(originalJson.getString("expiration"), convertedJson.getString("expiration"))
-    }
-
-    @Test
-    fun roundTripConversion_withNullFields_preservesData() {
-        val originalJson = JSONObject().apply {
-            put("title", "Simple Round Trip")
-            put("startsAt", "2024-01-15T10:30:00")
-            put("repeats", false)
-            put("cronExpression", JSONObject.NULL)
-            put("expiration", JSONObject.NULL)
-        }
-
-        val scheduledItem = converter.parseScheduledItem(originalJson)
-        val convertedJson = converter.scheduledItemToJson(scheduledItem)
-
-        assertEquals(originalJson.getString("title"), convertedJson.getString("title"))
-        assertEquals(originalJson.getString("startsAt"), convertedJson.getString("startsAt"))
-        assertEquals(originalJson.getBoolean("repeats"), convertedJson.getBoolean("repeats"))
-        assertTrue(convertedJson.isNull("cronExpression"))
-        assertTrue(convertedJson.isNull("expiration"))
+        assertEquals("FREQ=MONTHLY;BYDAY=2TU;COUNT=5", json.getString("rrule"))
+        assertEquals("2024-01-15T10:30:00Z", json.getString("startsAt"))
+        assertEquals(item.schedule.rrule, parsed.schedule.rrule)
+        assertEquals(item.startsAt, parsed.startsAt)
     }
 }

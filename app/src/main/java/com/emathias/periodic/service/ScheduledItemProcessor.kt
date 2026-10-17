@@ -1,6 +1,5 @@
 package com.emathias.periodic.service
 
-import com.cronutils.model.time.ExecutionTime
 import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.dao.ScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.TodoItemDao
@@ -10,7 +9,6 @@ import com.emathias.periodic.db.entities.TodoItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.Instant
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,19 +55,7 @@ class ScheduledItemProcessor @Inject constructor(
             ?.let { maxOf(since, it) }
             ?: since
 
-        val nextProcessTime = item.cronExpression?.let { cron ->
-            val executionTime = ExecutionTime.forCron(cron)
-            val cutoffZoned = cutoff.atZone(ZoneId.systemDefault())
-            executionTime.nextExecution(cutoffZoned).orElse(null)?.toInstant()
-        }
-
-        if (nextProcessTime == null) {
-            return null
-        }
-
-        if (item.expiration?.isBefore(nextProcessTime) == true) {
-            return null
-        }
+        val nextProcessTime = item.schedule.nextOccurrence(cutoff) ?: return null
 
         val now = Instant.now()
         if (now.isBefore(nextProcessTime)) {
