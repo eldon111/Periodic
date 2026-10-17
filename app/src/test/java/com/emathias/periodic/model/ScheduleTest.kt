@@ -121,6 +121,7 @@ class ScheduleTest {
         assertEquals("Every month on the second Tuesday at 9:00 AM", d("FREQ=MONTHLY;BYDAY=2TU"))
         assertEquals("Every month on the last Friday at 9:00 AM", d("FREQ=MONTHLY;BYDAY=-1FR"))
         assertEquals("Every year on March 5 at 9:00 AM", d("FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=5"))
+        assertEquals("Every year on February 29 at 9:00 AM", d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29"))
         assertEquals("Every week on Monday at 9:00 AM, 10 times", d("FREQ=WEEKLY;BYDAY=MO;COUNT=10"))
         assertEquals(
             "Every week on Monday at 9:00 AM, until Dec 31, 2027",
@@ -136,6 +137,7 @@ class ScheduleTest {
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;RSCALE=ISLAMIC-CIVIL"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=BACKWARD"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=FORWARD"))
+        assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=31"))
         assertEquals(
             "Every year on January 1 at 9:00 AM",
             d("FREQ=YEARLY;RSCALE=GREGORIAN;SKIP=OMIT")

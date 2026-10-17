@@ -7,6 +7,7 @@ import org.dmfs.rfc5545.recur.RecurrenceRule
 import org.dmfs.rfc5545.recur.RecurrenceRule.Part
 import org.dmfs.rfc5545.recur.RecurrenceRule.Skip
 import java.time.DayOfWeek
+import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -108,8 +109,11 @@ object RecurrenceFormatter {
                 if (byDay.isNotEmpty() || byMonthDay.size > 1 || byMonth.size > 1) return null
                 val month = byMonth.firstOrNull()?.plus(1) ?: startDate.monthValue // lib-recur exposes BYMONTH 0-based
                 val day = byMonthDay.firstOrNull() ?: startDate.dayOfMonth
-                if (day !in 1..31) return null
-                val date = LocalDate.of(2024, month, minOf(day, LocalDate.of(2024, month, 1).lengthOfMonth()))
+                val date = try {
+                    LocalDate.of(2024, month, day)
+                } catch (_: DateTimeException) {
+                    return null
+                }
                 "${every(interval, "year")} on ${date.format(MONTH_DAY_FORMAT)}"
             }
 
