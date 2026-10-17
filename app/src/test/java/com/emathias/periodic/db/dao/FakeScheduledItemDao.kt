@@ -28,6 +28,10 @@ object FakeScheduledItemDao : ScheduledItemDao {
         }
     }
 
+    override suspend fun delete(scheduledItem: ScheduledItem) {
+        map.remove(scheduledItem.id)
+    }
+
     override fun getAll(): Flow<List<ScheduledItem>> {
         return flowOf(map.values.toList())
     }

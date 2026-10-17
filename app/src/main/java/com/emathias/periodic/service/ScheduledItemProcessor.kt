@@ -1,12 +1,13 @@
 package com.emathias.periodic.service
 
 import com.cronutils.model.time.ExecutionTime
-import com.emathias.periodic.api.ScheduledItemApiService
+import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.dao.ScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.TodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.db.entities.ScheduledItemHistory
 import com.emathias.periodic.db.entities.TodoItem
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.Instant
 import java.time.ZoneId
@@ -15,17 +16,15 @@ import javax.inject.Singleton
 
 @Singleton
 class ScheduledItemProcessor @Inject constructor(
-    val scheduledItemApiService: ScheduledItemApiService,
+    val scheduledItemDao: ScheduledItemDao,
     val scheduledItemHistoryDao: ScheduledItemHistoryDao,
     val todoItemDao: TodoItemDao,
 ) {
 
     suspend fun processAll(since: Instant) {
-        scheduledItemApiService.getAllScheduledItems().collect { items ->
-            items.forEach { item ->
-                println("Processing scheduled item '${item.description}'")
-                process(item, since)
-            }
+        scheduledItemDao.getAll().first().forEach { item ->
+            println("Processing scheduled item '${item.description}'")
+            process(item, since)
         }
     }
 
