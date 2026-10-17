@@ -152,6 +152,7 @@ class ScheduleTest {
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;RSCALE=ISLAMIC-CIVIL"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=BACKWARD"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;SKIP=FORWARD"))
+        assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;BYMONTHDAY=15"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=31"))
         assertEquals(
             "Every year on January 1 at 9:00 AM",

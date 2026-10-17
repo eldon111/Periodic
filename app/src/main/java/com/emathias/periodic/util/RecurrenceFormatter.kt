@@ -106,7 +106,9 @@ object RecurrenceFormatter {
             }
 
             Freq.YEARLY -> {
-                if (byDay.isNotEmpty() || byMonthDay.size > 1 || byMonth.size > 1) return null
+                if (byDay.isNotEmpty() || byMonthDay.size > 1 || byMonth.size > 1 ||
+                    (byMonthDay.isNotEmpty() && byMonth.isEmpty())
+                ) return null
                 val month = byMonth.firstOrNull()?.plus(1) ?: startDate.monthValue // lib-recur exposes BYMONTH 0-based
                 val day = byMonthDay.firstOrNull() ?: startDate.dayOfMonth
                 val date = try {
