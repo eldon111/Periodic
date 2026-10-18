@@ -24,7 +24,6 @@ object RecurrenceFormatter {
 
     const val CUSTOM = "Custom repeat"
 
-    private val TIME_FORMAT = DateTimeFormatter.ofPattern("h:mm a", Locale.US)
     private val DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US)
     private val MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("MMMM d", Locale.US)
 
@@ -34,10 +33,9 @@ object RecurrenceFormatter {
     )
 
     fun describe(schedule: Schedule): String {
-        val time = schedule.start.format(TIME_FORMAT)
         val rule = schedule.recurrenceRule
         if (schedule.rrule == null) {
-            return "Once on ${schedule.start.toLocalDate().format(DATE_FORMAT)} at $time"
+            return "Once on ${schedule.start.toLocalDate().format(DATE_FORMAT)}"
         }
         if (rule == null) return CUSTOM
         if (rule.skip != Skip.OMIT || schedule.rrule.hasNonGregorianScale()) return CUSTOM
@@ -55,7 +53,7 @@ object RecurrenceFormatter {
             }
             else -> ""
         }
-        return "$base at $time$ending"
+        return "$base$ending"
     }
 
     private fun describeRule(rule: RecurrenceRule, startDate: LocalDate): String? {

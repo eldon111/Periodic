@@ -126,20 +126,20 @@ class ScheduleTest {
     @Test
     fun formatter_describesSupportedRules() {
         fun d(rule: String?) = RecurrenceFormatter.describe(schedule(rule))
-        assertEquals("Once on Jan 1, 2024 at 9:00 AM", d(null))
-        assertEquals("Every day at 9:00 AM", d("FREQ=DAILY"))
-        assertEquals("Every 3 days at 9:00 AM", d("FREQ=DAILY;INTERVAL=3"))
-        assertEquals("Every other week on Monday, Wednesday at 9:00 AM", d("FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,MO"))
-        assertEquals("Every weekday at 9:00 AM", d("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"))
-        assertEquals("Every other month on day 15 at 9:00 AM", d("FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=15"))
-        assertEquals("Every month on the last day at 9:00 AM", d("FREQ=MONTHLY;BYMONTHDAY=-1"))
-        assertEquals("Every month on the second Tuesday at 9:00 AM", d("FREQ=MONTHLY;BYDAY=2TU"))
-        assertEquals("Every month on the last Friday at 9:00 AM", d("FREQ=MONTHLY;BYDAY=-1FR"))
-        assertEquals("Every year on March 5 at 9:00 AM", d("FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=5"))
-        assertEquals("Every year on February 29 at 9:00 AM", d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29"))
-        assertEquals("Every week on Monday at 9:00 AM, 10 times", d("FREQ=WEEKLY;BYDAY=MO;COUNT=10"))
+        assertEquals("Once on Jan 1, 2024", d(null))
+        assertEquals("Every day", d("FREQ=DAILY"))
+        assertEquals("Every 3 days", d("FREQ=DAILY;INTERVAL=3"))
+        assertEquals("Every other week on Monday, Wednesday", d("FREQ=WEEKLY;INTERVAL=2;BYDAY=WE,MO"))
+        assertEquals("Every weekday", d("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"))
+        assertEquals("Every other month on day 15", d("FREQ=MONTHLY;INTERVAL=2;BYMONTHDAY=15"))
+        assertEquals("Every month on the last day", d("FREQ=MONTHLY;BYMONTHDAY=-1"))
+        assertEquals("Every month on the second Tuesday", d("FREQ=MONTHLY;BYDAY=2TU"))
+        assertEquals("Every month on the last Friday", d("FREQ=MONTHLY;BYDAY=-1FR"))
+        assertEquals("Every year on March 5", d("FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=5"))
+        assertEquals("Every year on February 29", d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29"))
+        assertEquals("Every week on Monday, 10 times", d("FREQ=WEEKLY;BYDAY=MO;COUNT=10"))
         assertEquals(
-            "Every week on Monday at 9:00 AM, until Dec 31, 2027",
+            "Every week on Monday, until Dec 31, 2027",
             d("FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z")
         )
     }
@@ -155,7 +155,7 @@ class ScheduleTest {
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;BYMONTHDAY=15"))
         assertEquals(RecurrenceFormatter.CUSTOM, d("FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=31"))
         assertEquals(
-            "Every year on January 1 at 9:00 AM",
+            "Every year on January 1",
             d("FREQ=YEARLY;RSCALE=GREGORIAN;SKIP=OMIT")
         )
     }

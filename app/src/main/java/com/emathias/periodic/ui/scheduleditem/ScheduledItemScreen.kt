@@ -120,7 +120,7 @@ fun ScheduledItemInfoBox(
             )
 
             val formattedFirstOccurrence =
-                DateTimeUtils.formatDateTime(scheduledItem.firstOccurrence)
+                DateTimeUtils.formatDate(scheduledItem.firstOccurrence)
             val timeText = if (scheduledItem.repeats) "Starts" else "At"
             Text(
                 text = "${timeText}: $formattedFirstOccurrence",
@@ -150,7 +150,7 @@ fun ScheduledItemInfoBox(
             // Expiration (if set)
             scheduledItem.expiration?.let { expiration ->
                 Text(
-                    text = "Expires: ${DateTimeUtils.formatDateTime(expiration)}",
+                    text = "Expires: ${DateTimeUtils.formatDate(expiration)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
