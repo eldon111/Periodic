@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -19,6 +21,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.DatePicker
@@ -33,7 +36,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,8 +44,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import android.widget.NumberPicker
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.window.Dialog
 import com.emathias.periodic.model.MonthlyMode
 import com.emathias.periodic.model.RepeatUnit
@@ -68,13 +71,15 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var description by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf(LocalDate.now()) }
     var unit by remember { mutableStateOf(RepeatUnit.WEEK) }
-    var interval by remember { mutableIntStateOf(1) }
+    var intervalText by remember { mutableStateOf("1") }
+    val interval = intervalText.toIntOrNull() ?: 1
+    val intervalValid = intervalText.toIntOrNull()?.let { it in 1..99 } == true
     var weekdays by remember { mutableStateOf(emptySet<DayOfWeek>()) }
     var monthlyMode by remember { mutableStateOf(MonthlyMode.DAY_OF_MONTH) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
 
     val endValid = endDate?.isBefore(startDate) != true
-    val canCreate = title.isNotBlank() && endValid
+    val canCreate = title.isNotBlank() && intervalValid && endValid
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
@@ -108,52 +113,49 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                 DateField("Start Date", startDate, onPick = { startDate = it })
 
                 run {
+                    var unitMenuOpen by remember { mutableStateOf(false) }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("Every")
-                        AndroidView(
-                            factory = { context ->
-                                NumberPicker(context).apply {
-                                    minValue = 1
-                                    maxValue = 99
-                                    wrapSelectorWheel = false
-                                    value = interval
-                                    setOnValueChangedListener { _, _, newVal -> interval = newVal }
-                                }
-                            },
-                            update = { if (it.value != interval) it.value = interval },
-                        )
-                    }
-                    var unitMenuOpen by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(
-                        expanded = unitMenuOpen,
-                        onExpandedChange = { unitMenuOpen = it },
-                    ) {
                         OutlinedTextField(
-                            value = unit.label + "s",
-                            onValueChange = {},
-                            readOnly = true,
+                            value = intervalText,
+                            onValueChange = { intervalText = it.filter(Char::isDigit).take(2) },
                             singleLine = true,
-                            label = { Text("Repeat every") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitMenuOpen) },
-                            modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                .fillMaxWidth(),
+                            isError = !intervalValid,
+                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.width(64.dp),
                         )
-                        ExposedDropdownMenu(
+                        ExposedDropdownMenuBox(
                             expanded = unitMenuOpen,
-                            onDismissRequest = { unitMenuOpen = false },
+                            onExpandedChange = { unitMenuOpen = it },
+                            modifier = Modifier.weight(1f),
                         ) {
-                            RepeatUnit.values().forEach {
-                                DropdownMenuItem(
-                                    text = { Text(it.label + "s") },
-                                    onClick = {
-                                        unit = it
-                                        unitMenuOpen = false
-                                    },
-                                )
+                            OutlinedTextField(
+                                value = unit.label + "s",
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitMenuOpen) },
+                                modifier = Modifier
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                    .widthIn(max = 160.dp),
+                            )
+                            ExposedDropdownMenu(
+                                expanded = unitMenuOpen,
+                                onDismissRequest = { unitMenuOpen = false },
+                            ) {
+                                RepeatUnit.values().forEach {
+                                    DropdownMenuItem(
+                                        text = { Text(it.label + "s") },
+                                        onClick = {
+                                            unit = it
+                                            unitMenuOpen = false
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
