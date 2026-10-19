@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -51,6 +52,14 @@ fun NavigationDrawerContent(
                 label = { Text(Screen.TodoList.title) },
                 selected = currentScreen == Screen.TodoList,
                 onClick = { onScreenSelected(Screen.TodoList) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+            )
+
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                label = { Text(Screen.Settings.title) },
+                selected = currentScreen == Screen.Settings,
+                onClick = { onScreenSelected(Screen.Settings) },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
         }

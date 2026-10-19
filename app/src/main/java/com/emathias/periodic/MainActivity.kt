@@ -1,9 +1,12 @@
 package com.emathias.periodic
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -26,6 +29,9 @@ import com.emathias.periodic.ui.scheduleditem.ScheduledItemViewModel
 import com.emathias.periodic.ui.theme.PeriodicTheme
 import com.emathias.periodic.ui.todoitem.TodoItemScreen
 import com.emathias.periodic.ui.todoitem.TodoItemViewModel
+import com.emathias.periodic.notification.NotificationScheduler
+import com.emathias.periodic.notification.NotificationSettings
+import com.emathias.periodic.ui.settings.SettingsScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -38,6 +44,12 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var scheduledItemDao: ScheduledItemDao
+
+    @Inject
+    lateinit var notificationScheduler: NotificationScheduler
+
+    @Inject
+    lateinit var notificationSettings: NotificationSettings
 
     @Suppress("UNCHECKED_CAST")
     private val scheduledItemViewModel by viewModels<ScheduledItemViewModel>(
@@ -68,6 +80,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+                .launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        notificationScheduler.schedule()
         setContent {
             PeriodicTheme {
                 var currentScreen by remember { mutableStateOf(Screen.ScheduledItems) }
@@ -94,6 +111,24 @@ class MainActivity : ComponentActivity() {
                             ScheduledItemScreen(
                                 state = state,
                                 onEvent = scheduledItemViewModel::onEvent,
+                                onMenuClick = {
+                                    scope.launch {
+                                        drawerState.open()
+                                    }
+                                }
+                            )
+                        }
+
+                        Screen.Settings -> {
+                            var reminderTime by remember {
+                                mutableStateOf(notificationSettings.reminderTime)
+                            }
+                            SettingsScreen(
+                                reminderTime = reminderTime,
+                                onReminderTimeChange = {
+                                    notificationScheduler.setReminderTime(it)
+                                    reminderTime = it
+                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()
