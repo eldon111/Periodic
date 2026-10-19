@@ -2,9 +2,12 @@ package com.emathias.periodic.ui.scheduleditem.createdialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -53,12 +56,12 @@ import java.util.Locale
 
 private val DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale.US)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf(LocalDate.now()) }
-    var repeats by remember { mutableStateOf(false) }
     var unit by remember { mutableStateOf(RepeatUnit.WEEK) }
     var intervalText by remember { mutableStateOf("1") }
     var weekdays by remember { mutableStateOf(emptySet<DayOfWeek>()) }
@@ -68,7 +71,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     val interval = intervalText.toIntOrNull()
     val intervalValid = interval != null && interval in 1..999
     val endValid = endDate?.isBefore(startDate) != true
-    val canCreate = title.isNotBlank() && (!repeats || (intervalValid && endValid))
+    val canCreate = title.isNotBlank() && intervalValid && endValid
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
@@ -99,19 +102,9 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                DateField("Date", startDate, onPick = { startDate = it })
+                DateField("Start Date", startDate, onPick = { startDate = it })
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .toggleable(value = repeats, onValueChange = { repeats = it }, role = Role.Checkbox),
-                ) {
-                    Checkbox(checked = repeats, onCheckedChange = null)
-                    Text("Repeats", modifier = Modifier.padding(start = 8.dp))
-                }
-
-                if (repeats) {
+                run {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -123,14 +116,13 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                             singleLine = true,
                             isError = !intervalValid,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(0.4f),
+                            modifier = Modifier.width(88.dp),
                         )
                         Text(
                             text = unit.label + if (interval != 1) "s" else "",
-                            modifier = Modifier.weight(0.6f),
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         RepeatUnit.values().forEach {
                             FilterChip(
                                 selected = unit == it,
@@ -142,7 +134,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     when (unit) {
                         RepeatUnit.WEEK -> {
                             Text("On")
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 DayOfWeek.values().forEach { day ->
                                     FilterChip(
                                         selected = day in weekdays,
@@ -192,15 +184,13 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
 
                 Button(
                     onClick = {
-                        val repetition = if (repeats) {
-                            Repetition(
-                                unit = unit,
-                                interval = interval ?: 1,
-                                weekdays = weekdays,
-                                monthlyMode = monthlyMode,
-                                endDate = endDate,
-                            )
-                        } else null
+                        val repetition = Repetition(
+                            unit = unit,
+                            interval = interval ?: 1,
+                            weekdays = weekdays,
+                            monthlyMode = monthlyMode,
+                            endDate = endDate,
+                        )
                         onEvent(CreateItem(title, description, startDate, repetition))
                     },
                     enabled = canCreate,
@@ -263,6 +253,7 @@ private fun DateField(
 }
 
 @Preview(showBackground = true)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScheduledItemCreationDialogPreview() {
     ScheduledItemCreationDialog { }
