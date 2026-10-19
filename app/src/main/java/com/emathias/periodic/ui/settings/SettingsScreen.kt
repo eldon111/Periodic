@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,6 +33,7 @@ import java.time.format.FormatStyle
 fun SettingsScreen(
     reminderTime: LocalTime,
     onReminderTimeChange: (LocalTime) -> Unit,
+    onSendNotificationsNow: () -> Unit,
     onMenuClick: () -> Unit,
 ) {
     var showPicker by remember { mutableStateOf(false) }
@@ -39,17 +42,25 @@ fun SettingsScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = { PeriodicTopAppBar(title = "Settings", onMenuClick = onMenuClick) },
     ) { padding ->
-        Row(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Daily reminder time")
-            TextButton(onClick = { showPicker = true }) {
-                Text(reminderTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))
+        Column(modifier = Modifier.padding(padding).padding(16.dp).fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Daily reminder time")
+                TextButton(onClick = { showPicker = true }) {
+                    Text(reminderTime.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)))
+                }
+            }
+
+            Text(
+                text = "Developer",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
+            )
+            Button(onClick = onSendNotificationsNow) {
+                Text("Send today's notifications now")
             }
         }
     }

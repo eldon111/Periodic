@@ -32,7 +32,10 @@ import com.emathias.periodic.ui.todoitem.TodoItemViewModel
 import com.emathias.periodic.notification.NotificationScheduler
 import com.emathias.periodic.notification.NotificationSettings
 import com.emathias.periodic.ui.settings.SettingsScreen
+import com.emathias.periodic.notification.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -47,6 +50,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var notificationScheduler: NotificationScheduler
+
+    @Inject
+    lateinit var notificationHelper: NotificationHelper
 
     @Inject
     lateinit var notificationSettings: NotificationSettings
@@ -128,6 +134,15 @@ class MainActivity : ComponentActivity() {
                                 onReminderTimeChange = {
                                     notificationScheduler.setReminderTime(it)
                                     reminderTime = it
+                                },
+                                onSendNotificationsNow = {
+                                    scope.launch {
+                                        val today = LocalDate.now()
+                                        notificationHelper.notify(
+                                            scheduledItemDao.getAll().first()
+                                                .filter { NotificationHelper.isDueOn(it, today) }
+                                        )
+                                    }
                                 },
                                 onMenuClick = {
                                     scope.launch {
