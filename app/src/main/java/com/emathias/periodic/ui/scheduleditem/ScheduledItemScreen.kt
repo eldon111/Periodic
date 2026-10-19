@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemConfirmationDialog
 import com.emathias.periodic.ui.scheduleditem.createdialog.ScheduledItemCreationDialog
 import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.model.Schedule
@@ -71,8 +70,6 @@ fun ScheduledItemScreen(
         )
         if (state.showingAddDialog) {
             ScheduledItemCreationDialog(onEvent)
-        } else if (state.showingConfirmDialog) {
-            ScheduledItemConfirmationDialog(state, onEvent)
         }
     }
 }
@@ -123,7 +120,7 @@ fun ScheduledItemInfoBox(
             )
 
             val formattedFirstOccurrence =
-                DateTimeUtils.formatDateTime(scheduledItem.firstOccurrence)
+                DateTimeUtils.formatDate(scheduledItem.firstOccurrence)
             val timeText = if (scheduledItem.repeats) "Starts" else "At"
             Text(
                 text = "${timeText}: $formattedFirstOccurrence",
@@ -153,7 +150,7 @@ fun ScheduledItemInfoBox(
             // Expiration (if set)
             scheduledItem.expiration?.let { expiration ->
                 Text(
-                    text = "Expires: ${DateTimeUtils.formatDateTime(expiration)}",
+                    text = "Expires: ${DateTimeUtils.formatDate(expiration)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
