@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,6 +19,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -56,7 +65,7 @@ import java.util.Locale
 
 private val DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale.US)
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var title by remember { mutableStateOf("") }
@@ -110,25 +119,57 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("Every")
-                        TextField(
+                        OutlinedButton(
+                            onClick = { intervalText = ((interval ?: 1) - 1).coerceAtLeast(1).toString() },
+                            enabled = interval == null || interval > 1,
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.size(40.dp),
+                        ) { Text("−") }
+                        OutlinedTextField(
                             value = intervalText,
                             onValueChange = { intervalText = it.filter(Char::isDigit).take(3) },
                             singleLine = true,
                             isError = !intervalValid,
+                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.width(88.dp),
+                            modifier = Modifier.width(72.dp),
                         )
-                        Text(
-                            text = unit.label + if (interval != 1) "s" else "",
-                        )
+                        OutlinedButton(
+                            onClick = { intervalText = ((interval ?: 0) + 1).coerceAtMost(999).toString() },
+                            enabled = interval == null || interval < 999,
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.size(40.dp),
+                        ) { Text("+") }
                     }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        RepeatUnit.values().forEach {
-                            FilterChip(
-                                selected = unit == it,
-                                onClick = { unit = it },
-                                label = { Text(it.label.replaceFirstChar(Char::uppercase)) },
-                            )
+                    var unitMenuOpen by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = unitMenuOpen,
+                        onExpandedChange = { unitMenuOpen = it },
+                    ) {
+                        OutlinedTextField(
+                            value = unit.label + if (interval != 1) "s" else "",
+                            onValueChange = {},
+                            readOnly = true,
+                            singleLine = true,
+                            label = { Text("Repeat every") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitMenuOpen) },
+                            modifier = Modifier
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .fillMaxWidth(),
+                        )
+                        ExposedDropdownMenu(
+                            expanded = unitMenuOpen,
+                            onDismissRequest = { unitMenuOpen = false },
+                        ) {
+                            RepeatUnit.values().forEach {
+                                DropdownMenuItem(
+                                    text = { Text(it.label + if (interval != 1) "s" else "") },
+                                    onClick = {
+                                        unit = it
+                                        unitMenuOpen = false
+                                    },
+                                )
+                            }
                         }
                     }
                     when (unit) {
