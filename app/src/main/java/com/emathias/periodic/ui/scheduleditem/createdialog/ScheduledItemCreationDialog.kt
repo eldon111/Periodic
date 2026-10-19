@@ -4,12 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -22,7 +19,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.DatePicker
@@ -37,18 +33,18 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.NumberPicker
 import androidx.compose.ui.window.Dialog
-import androidx.compose.foundation.text.KeyboardOptions
 import com.emathias.periodic.model.MonthlyMode
 import com.emathias.periodic.model.RepeatUnit
 import com.emathias.periodic.model.Repetition
@@ -72,15 +68,13 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
     var description by remember { mutableStateOf("") }
     var startDate by remember { mutableStateOf(LocalDate.now()) }
     var unit by remember { mutableStateOf(RepeatUnit.WEEK) }
-    var intervalText by remember { mutableStateOf("1") }
+    var interval by remember { mutableIntStateOf(1) }
     var weekdays by remember { mutableStateOf(emptySet<DayOfWeek>()) }
     var monthlyMode by remember { mutableStateOf(MonthlyMode.DAY_OF_MONTH) }
     var endDate by remember { mutableStateOf<LocalDate?>(null) }
 
-    val interval = intervalText.toIntOrNull()
-    val intervalValid = interval != null && interval in 1..999
     val endValid = endDate?.isBefore(startDate) != true
-    val canCreate = title.isNotBlank() && intervalValid && endValid
+    val canCreate = title.isNotBlank() && endValid
 
     Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
         Card(
@@ -119,27 +113,18 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("Every")
-                        OutlinedButton(
-                            onClick = { intervalText = ((interval ?: 1) - 1).coerceAtLeast(1).toString() },
-                            enabled = interval == null || interval > 1,
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(40.dp),
-                        ) { Text("−") }
-                        OutlinedTextField(
-                            value = intervalText,
-                            onValueChange = { intervalText = it.filter(Char::isDigit).take(3) },
-                            singleLine = true,
-                            isError = !intervalValid,
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.width(72.dp),
+                        AndroidView(
+                            factory = { context ->
+                                NumberPicker(context).apply {
+                                    minValue = 1
+                                    maxValue = 99
+                                    wrapSelectorWheel = false
+                                    value = interval
+                                    setOnValueChangedListener { _, _, newVal -> interval = newVal }
+                                }
+                            },
+                            update = { if (it.value != interval) it.value = interval },
                         )
-                        OutlinedButton(
-                            onClick = { intervalText = ((interval ?: 0) + 1).coerceAtMost(999).toString() },
-                            enabled = interval == null || interval < 999,
-                            contentPadding = PaddingValues(0.dp),
-                            modifier = Modifier.size(40.dp),
-                        ) { Text("+") }
                     }
                     var unitMenuOpen by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(
@@ -147,7 +132,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                         onExpandedChange = { unitMenuOpen = it },
                     ) {
                         OutlinedTextField(
-                            value = unit.label + if (interval != 1) "s" else "",
+                            value = unit.label + "s",
                             onValueChange = {},
                             readOnly = true,
                             singleLine = true,
@@ -163,7 +148,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                         ) {
                             RepeatUnit.values().forEach {
                                 DropdownMenuItem(
-                                    text = { Text(it.label + if (interval != 1) "s" else "") },
+                                    text = { Text(it.label + "s") },
                                     onClick = {
                                         unit = it
                                         unitMenuOpen = false
@@ -227,7 +212,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     onClick = {
                         val repetition = Repetition(
                             unit = unit,
-                            interval = interval ?: 1,
+                            interval = interval,
                             weekdays = weekdays,
                             monthlyMode = monthlyMode,
                             endDate = endDate,
