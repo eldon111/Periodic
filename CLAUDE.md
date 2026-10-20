@@ -63,19 +63,19 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 
 ### Key Data Flow
 1. **Scheduled Items**: Created via AI or manual input, stored with an iCalendar-style `Schedule` (DTSTART + RRULE)
-2. **Background Processing**: `ScheduledItemWorker` runs once at app startup and processes due items; `DailyNotificationWorker` posts the daily reminders at the configured time
-3. **Todo Generation**: Scheduled items automatically create todo items when executed
+2. **Background Processing**: `ScheduledItemWorker` runs once at app startup and processes due items; `DailyNotificationWorker` runs the processor, then posts one summary notification of open/overdue to-dos at the configured time
+3. **Todo Generation**: The most recent due occurrence of a scheduled item creates a to-do (whole-day `dueDate`), but only if the item has no open to-do. To-dos persist until checked (one-way; no uncheck), are kept forever, and are deleted with their scheduled item (FK cascade)
 4. **History Tracking**: Execution history prevents duplicate processing
 
 ### Main Entities
 - `ScheduledItem`: Core scheduling entity with an iCalendar-style `Schedule` (DTSTART + RRULE)
-- `TodoItem`: Simple todos generated from scheduled items  
+- `TodoItem`: Generated to-do (scheduledItemId, title, description, dueDate, createdAt, completedAt)  
 - `ScheduledItemHistory`: Tracks individual item executions
 - `ScheduledItemProcessHistory`: Tracks overall processing runs
 
 ### Configuration Modules
 - `ApiModule`: HTTP client and API service configuration
-- `RoomModule`: Database setup with fallback to destructive migration
+- `RoomModule`: Database setup with explicit migrations (see `db/dao/Migrations.kt`); schemas exported to `app/schemas`
 - `AwsConfig`: Bedrock client configuration with proper timeouts
 
 ### Service Layer

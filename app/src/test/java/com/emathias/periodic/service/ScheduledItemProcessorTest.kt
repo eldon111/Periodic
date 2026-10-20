@@ -5,10 +5,12 @@ import com.emathias.periodic.db.dao.FakeScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.FakeTodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.model.Schedule
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
@@ -31,6 +33,8 @@ class ScheduledItemProcessorTest {
 
     @Before
     fun before() {
+        FakeTodoItemDao.map.clear()
+        FakeScheduledItemHistoryDao.map.clear()
         processor = ScheduledItemProcessor(
             FakeScheduledItemDao,
             FakeScheduledItemHistoryDao,
@@ -105,5 +109,40 @@ class ScheduledItemProcessorTest {
         )
 
         Assert.assertNull(result)
+    }
+
+    @Test
+    fun itCreatesOneTodoForMostRecentOccurrenceOnly() = runBlocking {
+        processor.process(dailyItem, Instant.MIN, null)
+
+        val todos = FakeTodoItemDao.map.values.toList()
+        Assert.assertEquals(1, todos.size)
+        Assert.assertEquals(dailyItem.id, todos[0].scheduledItemId)
+        Assert.assertEquals(dailyItem.title, todos[0].title)
+        Assert.assertEquals(
+            mostRecentOccurrence.atZone(ZoneId.systemDefault()).toLocalDate(),
+            todos[0].dueDate,
+        )
+    }
+
+    @Test
+    fun itDoesNotCreateSecondTodoWhileOneIsOpen() = runBlocking {
+        processor.process(dailyItem, Instant.MIN, null)
+        processor.process(dailyItem, Instant.MIN, null)
+
+        Assert.assertEquals(1, FakeTodoItemDao.map.size)
+    }
+
+    @Test
+    fun itCreatesNewTodoAfterCompletion() = runBlocking {
+        processor.process(dailyItem, Instant.MIN, null)
+        val first = FakeTodoItemDao.map.values.single()
+        FakeTodoItemDao.update(first.copy(completedAt = now))
+
+        // A later occurrence becomes due after the previous one was handled.
+        processor.process(dailyItem, Instant.MIN, mostRecentOccurrence.minus(1, ChronoUnit.DAYS))
+
+        Assert.assertEquals(2, FakeTodoItemDao.map.size)
+        Assert.assertEquals(1, FakeTodoItemDao.countOpen())
     }
 }

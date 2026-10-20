@@ -16,7 +16,7 @@ object FakeTodoItemDao : TodoItemDao {
                 todoItem.copy(id = Random.Default.nextLong())
             }
 
-        map.put(todoItem.id, updatedItem)
+        map.put(updatedItem.id, updatedItem)
         return updatedItem.id
     }
 
@@ -31,5 +31,19 @@ object FakeTodoItemDao : TodoItemDao {
     override fun getAll(): Flow<List<TodoItem>> {
         return flowOf(map.values.toList())
     }
+
+    override fun getOpen(): Flow<List<TodoItem>> =
+        flowOf(map.values.filter { !it.completed }.sortedBy { it.dueDate })
+
+    override fun getCompleted(): Flow<List<TodoItem>> =
+        flowOf(map.values.filter { it.completed }.sortedByDescending { it.completedAt })
+
+    override suspend fun getOpenForScheduledItem(scheduledItemId: Long): TodoItem? =
+        map.values.firstOrNull { it.scheduledItemId == scheduledItemId && !it.completed }
+
+    override suspend fun countOpen(): Int = map.values.count { !it.completed }
+
+    override suspend fun countOverdue(today: Long): Int =
+        map.values.count { !it.completed && it.dueDate.toEpochDay() < today }
 
 }

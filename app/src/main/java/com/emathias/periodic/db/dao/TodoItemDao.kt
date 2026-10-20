@@ -19,4 +19,19 @@ interface TodoItemDao {
 
     @Query("SELECT * FROM TodoItem")
     fun getAll(): Flow<List<TodoItem>>
+
+    @Query("SELECT * FROM TodoItem WHERE completedAt IS NULL ORDER BY dueDate ASC, id ASC")
+    fun getOpen(): Flow<List<TodoItem>>
+
+    @Query("SELECT * FROM TodoItem WHERE completedAt IS NOT NULL ORDER BY completedAt DESC")
+    fun getCompleted(): Flow<List<TodoItem>>
+
+    @Query("SELECT * FROM TodoItem WHERE scheduledItemId = :scheduledItemId AND completedAt IS NULL LIMIT 1")
+    suspend fun getOpenForScheduledItem(scheduledItemId: Long): TodoItem?
+
+    @Query("SELECT COUNT(*) FROM TodoItem WHERE completedAt IS NULL")
+    suspend fun countOpen(): Int
+
+    @Query("SELECT COUNT(*) FROM TodoItem WHERE completedAt IS NULL AND dueDate < :today")
+    suspend fun countOverdue(today: Long): Int
 }

@@ -29,8 +29,8 @@ object FakeScheduledItemHistoryDao : ScheduledItemHistoryDao {
         return getAll().map { it.filter { it.scheduledItemId == scheduledItemId } }
     }
 
-    override fun getMostRecentForItem(scheduledItemId: Long): Flow<ScheduledItemHistory> {
-        return getAllForItem(scheduledItemId).map { it.maxBy { it.processedAt } }
+    override fun getMostRecentForItem(scheduledItemId: Long): Flow<ScheduledItemHistory?> {
+        return getAllForItem(scheduledItemId).map { it.maxByOrNull { it.processedAt } }
     }
 
 }

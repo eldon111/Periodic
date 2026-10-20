@@ -9,6 +9,7 @@ import com.emathias.periodic.db.entities.TodoItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,14 +36,40 @@ class ScheduledItemProcessor @Inject constructor(
         since: Instant,
         mostRecentProcessTime: Instant?,
     ) {
-        findNextProcessTime(item, since, mostRecentProcessTime).let { nextProcessTime ->
-            todoItemDao.insert(TodoItem(text = item.description))
-            scheduledItemHistoryDao.insert(
-                ScheduledItemHistory(
-                    scheduledItemId = item.id,
-                    processedAt = Instant.now(),
-                )
+        // One open to-do per scheduled item: nothing new until the user completes it.
+        if (todoItemDao.getOpenForScheduledItem(item.id) != null) return
+
+        val occurrence = findLatestProcessTime(item, since, mostRecentProcessTime) ?: return
+        val now = Instant.now()
+        todoItemDao.insert(
+            TodoItem(
+                scheduledItemId = item.id,
+                title = item.title,
+                description = item.description,
+                dueDate = occurrence.atZone(ZoneId.systemDefault()).toLocalDate(),
+                createdAt = now,
             )
+        )
+        scheduledItemHistoryDao.insert(
+            ScheduledItemHistory(
+                scheduledItemId = item.id,
+                processedAt = occurrence,
+            )
+        )
+    }
+
+    /** The most recent occurrence that is due (not in the future) and after the cutoff. */
+    fun findLatestProcessTime(
+        item: ScheduledItem,
+        since: Instant,
+        mostRecentProcessTime: Instant?,
+    ): Instant? {
+        var latest: Instant? = null
+        var cutoff = mostRecentProcessTime?.let { maxOf(since, it) } ?: since
+        while (true) {
+            val next = findNextProcessTime(item, cutoff, null) ?: return latest
+            latest = next
+            cutoff = next
         }
     }
 
