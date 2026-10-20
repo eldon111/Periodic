@@ -85,6 +85,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isFirstLaunch = getPreferences(MODE_PRIVATE)
+            .getBoolean(KEY_FIRST_LAUNCH, true)
+        getPreferences(MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_FIRST_LAUNCH, false)
+            .apply()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
                 .launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -93,8 +99,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             PeriodicTheme {
                 var currentScreen by remember { mutableStateOf(
-                    if (intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true) Screen.TodoList
-                    else Screen.ScheduledItems
+                    when {
+                        intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true -> Screen.TodoList
+                        isFirstLaunch -> Screen.ScheduledItems
+                        else -> Screen.TodoList
+                    }
                 ) }
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
@@ -175,5 +184,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_TODOS = "open_todos"
+        private const val KEY_FIRST_LAUNCH = "first_launch"
     }
 }
