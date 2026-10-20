@@ -59,3 +59,16 @@ fail the build with a message listing them.
   future CI APKs update in place.
 - `INSTALL_FAILED_VERSION_DOWNGRADE`: the installed `versionCode` is higher than the
   new APK's (e.g. a local build with a larger value). Uninstall or install a newer CI build.
+
+## Releasing (semantic versions)
+
+Releases follow [SemVer](https://semver.org). Push a tag `vMAJOR.MINOR.PATCH`
+(pre-releases like `v0.2.0-rc.1` are marked as such):
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+CI sets `versionName` from the tag (`0.1.0`), uses the run number as
+`versionCode`, and publishes a GitHub Release with the signed APK and
+auto-generated notes.
