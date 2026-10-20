@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
                     if (intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true) Screen.TodoList
                     else Screen.ScheduledItems
                 ) }
+                var scheduledItemIdToFocus by remember { mutableStateOf<Long?>(null) }
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
@@ -106,6 +107,9 @@ class MainActivity : ComponentActivity() {
                             currentScreen = currentScreen,
                             onScreenSelected = { screen ->
                                 currentScreen = screen
+                                if (screen != Screen.ScheduledItems) {
+                                    scheduledItemIdToFocus = null
+                                }
                                 scope.launch {
                                     drawerState.close()
                                 }
@@ -119,6 +123,10 @@ class MainActivity : ComponentActivity() {
                             ScheduledItemScreen(
                                 state = state,
                                 onEvent = scheduledItemViewModel::onEvent,
+                                scheduledItemIdToFocus = scheduledItemIdToFocus,
+                                onScheduledItemFocused = {
+                                    scheduledItemIdToFocus = null
+                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()
@@ -158,6 +166,10 @@ class MainActivity : ComponentActivity() {
                             TodoItemScreen(
                                 state = state,
                                 onEvent = todoItemViewModel::onEvent,
+                                onScheduledItemClick = { scheduledItemId ->
+                                    scheduledItemIdToFocus = scheduledItemId
+                                    currentScreen = Screen.ScheduledItems
+                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()

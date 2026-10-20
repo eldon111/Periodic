@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
@@ -20,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +44,20 @@ fun ScheduledItemScreen(
     state: ScheduledItemState,
     onEvent: (ScheduledItemEvent) -> Unit,
     onMenuClick: () -> Unit = {},
+    scheduledItemIdToFocus: Long? = null,
+    onScheduledItemFocused: () -> Unit = {},
 ) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(state.scheduledItems, scheduledItemIdToFocus) {
+        scheduledItemIdToFocus?.let { itemId ->
+            val index = state.scheduledItems.indexOfFirst { it.id == itemId }
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+                onScheduledItemFocused()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             PeriodicTopAppBar(
@@ -66,6 +82,7 @@ fun ScheduledItemScreen(
         ScheduledItemList(
             state.scheduledItems,
             onEvent,
+            listState = listState,
             modifier = Modifier.padding(innerPadding)
         )
         if (state.showingAddDialog) {
@@ -79,9 +96,11 @@ fun ScheduledItemList(
     scheduledItems: List<ScheduledItem>,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(scheduledItems) { scheduledItem ->
