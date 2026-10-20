@@ -1,5 +1,6 @@
 package com.emathias.periodic.ui.scheduleditem
 
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
