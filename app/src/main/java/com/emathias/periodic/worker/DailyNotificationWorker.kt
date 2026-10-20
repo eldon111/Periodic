@@ -29,8 +29,9 @@ class DailyNotificationWorker @AssistedInject constructor(
             }
             notificationHelper.notify(due)
         } finally {
-            // Always queue tomorrow's run, even if this one failed.
-            notificationScheduler.schedule()
+            // Always queue tomorrow's run, even if this one failed. Must replace: this worker
+            // is still running, so KEEP would treat it as the existing work and enqueue nothing.
+            notificationScheduler.schedule(replace = true)
         }
         return Result.success()
     }
