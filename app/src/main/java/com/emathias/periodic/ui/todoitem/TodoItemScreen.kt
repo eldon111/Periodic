@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
@@ -29,6 +30,7 @@ fun TodoItemScreen(
     state: TodoItemState,
     onEvent: (TodoItemEvent) -> Unit,
     onMenuClick: () -> Unit = {},
+    onScheduledItemClick: (Long) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -44,7 +46,8 @@ fun TodoItemScreen(
         TodoItemList(
             state,
             onEvent,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            onScheduledItemClick = onScheduledItemClick,
         )
     }
 }
@@ -54,6 +57,7 @@ fun TodoItemList(
     state: TodoItemState,
     onEvent: (TodoItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    onScheduledItemClick: (Long) -> Unit = {},
 ) {
     LazyColumn(modifier = modifier) {
         item { SectionHeader("Open") }
@@ -66,12 +70,12 @@ fun TodoItemList(
             }
         }
         items(state.openItems, key = { it.id }) { todoItem ->
-            TodoItemRow(todoItem, state.today, onEvent)
+            TodoItemRow(todoItem, state.today, onEvent, onScheduledItemClick = onScheduledItemClick)
         }
         if (state.completedItems.isNotEmpty()) {
             item { SectionHeader("Completed") }
             items(state.completedItems, key = { it.id }) { todoItem ->
-                TodoItemRow(todoItem, state.today, onEvent)
+                TodoItemRow(todoItem, state.today, onEvent, onScheduledItemClick = onScheduledItemClick)
             }
         }
     }
@@ -92,12 +96,17 @@ fun TodoItemRow(
     today: LocalDate,
     onEvent: (TodoItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    onScheduledItemClick: (Long) -> Unit = {},
 ) {
     val overdue = !todoItem.completed && todoItem.dueDate.isBefore(today)
     Row(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clickable(
+                onClickLabel = "View scheduled item",
+                onClick = { onScheduledItemClick(todoItem.scheduledItemId) },
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(

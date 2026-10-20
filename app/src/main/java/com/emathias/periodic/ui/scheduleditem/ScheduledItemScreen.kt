@@ -1,5 +1,8 @@
 package com.emathias.periodic.ui.scheduleditem
 
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
@@ -20,6 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,16 +42,43 @@ import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.model.Schedule
 import com.emathias.periodic.util.RecurrenceFormatter
 import com.emathias.periodic.util.DateTimeUtils
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.OffsetDateTime
 import kotlin.random.Random
+
+private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 500L
+private const val SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS = 100
+private const val SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS = 1000
 
 @Composable
 fun ScheduledItemScreen(
     state: ScheduledItemState,
     onEvent: (ScheduledItemEvent) -> Unit,
     onMenuClick: () -> Unit = {},
+    scheduledItemIdToFocus: Long? = null,
+    onScheduledItemFocused: () -> Unit = {},
 ) {
+    val listState = rememberLazyListState()
+    var highlightedItemId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(state.scheduledItems, scheduledItemIdToFocus) {
+        scheduledItemIdToFocus?.let { itemId ->
+            val index = state.scheduledItems.indexOfFirst { it.id == itemId }
+            if (index >= 0) {
+                listState.animateScrollToItem(index)
+                highlightedItemId = itemId
+                onScheduledItemFocused()
+            }
+        }
+    }
+    LaunchedEffect(highlightedItemId) {
+        if (highlightedItemId != null) {
+            delay(SCHEDULED_ITEM_HIGHLIGHT_MILLIS)
+            highlightedItemId = null
+        }
+    }
+
     Scaffold(
         topBar = {
             PeriodicTopAppBar(
@@ -66,6 +103,8 @@ fun ScheduledItemScreen(
         ScheduledItemList(
             state.scheduledItems,
             onEvent,
+            highlightedItemId = highlightedItemId,
+            listState = listState,
             modifier = Modifier.padding(innerPadding)
         )
         if (state.showingAddDialog) {
@@ -79,15 +118,19 @@ fun ScheduledItemList(
     scheduledItems: List<ScheduledItem>,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    highlightedItemId: Long? = null,
+    listState: LazyListState = rememberLazyListState(),
 ) {
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(scheduledItems) { scheduledItem ->
             ScheduledItemInfoBox(
                 scheduledItem = scheduledItem,
-                onEvent = onEvent
+                onEvent = onEvent,
+                highlighted = scheduledItem.id == highlightedItemId,
             )
         }
     }
@@ -98,12 +141,32 @@ fun ScheduledItemInfoBox(
     scheduledItem: ScheduledItem,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
 ) {
+    val highlightTransition = updateTransition(
+        targetState = highlighted,
+        label = "scheduled item highlight",
+    )
+    val containerColor by highlightTransition.animateColor(
+        transitionSpec = {
+            if (false isTransitioningTo true) {
+                tween(SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS)
+            } else {
+                tween(SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS)
+            }
+        },
+        label = "scheduled item highlight color",
+    ) { isHighlighted ->
+        if (isHighlighted) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surfaceVariant
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
         )
     ) {
         Column(
