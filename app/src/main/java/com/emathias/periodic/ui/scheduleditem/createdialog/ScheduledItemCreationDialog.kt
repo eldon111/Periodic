@@ -404,5 +404,5 @@ private fun DateField(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScheduledItemCreationDialogPreview() {
-    ScheduledItemCreationDialog { }
+    ScheduledItemCreationDialog(onEvent = { })
 }
