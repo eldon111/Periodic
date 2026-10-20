@@ -3,6 +3,7 @@ package com.emathias.periodic
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -138,10 +139,15 @@ class MainActivity : ComponentActivity() {
                                 onSendNotificationsNow = {
                                     scope.launch {
                                         val today = LocalDate.now()
-                                        notificationHelper.notify(
-                                            scheduledItemDao.getAll().first()
-                                                .filter { NotificationHelper.isDueOn(it, today) }
-                                        )
+                                        val due = scheduledItemDao.getAll().first()
+                                            .filter { NotificationHelper.isDueOn(it, today) }
+                                        val posted = notificationHelper.notify(due)
+                                        val message = when {
+                                            posted < 0 -> "Notification permission not granted"
+                                            due.isEmpty() -> "No items are due today"
+                                            else -> "Sent $posted notification(s)"
+                                        }
+                                        Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 onMenuClick = {

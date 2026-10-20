@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -34,12 +35,18 @@ class NotificationHelper @Inject constructor(
         }
     }
 
-    /** Posts one notification per item. Returns silently if permission is not granted. */
-    fun notify(items: List<ScheduledItem>) {
+    /**
+     * Posts one notification per item. Returns the number posted, or -1 if notifications are
+     * not permitted.
+     */
+    fun notify(items: List<ScheduledItem>): Int {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) {
+            Log.w(TAG, "POST_NOTIFICATIONS not granted; skipping ${items.size} notification(s)")
+            return -1
+        }
 
         createChannel()
         val contentIntent = PendingIntent.getActivity(
@@ -47,6 +54,7 @@ class NotificationHelper @Inject constructor(
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val manager = NotificationManagerCompat.from(context)
+        var posted = 0
         items.forEach { item ->
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
@@ -56,11 +64,18 @@ class NotificationHelper @Inject constructor(
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .build()
-            manager.notify(item.id.toInt(), notification)
+            try {
+                manager.notify(item.id.toInt(), notification)
+                posted++
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to post notification for item ${item.id}", e)
+            }
         }
+        return posted
     }
 
     companion object {
+        private const val TAG = "NotificationHelper"
         const val CHANNEL_ID = "daily_reminders"
 
         /** True if [item] has an occurrence on [date] in the device's local time zone. */
