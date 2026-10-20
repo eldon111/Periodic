@@ -12,14 +12,35 @@ keytool -genkeypair -v -keystore release.keystore -alias periodic \
 base64 -w0 release.keystore   # macOS: base64 -i release.keystore
 ```
 
-Add repository secrets (Settings > Secrets and variables > Actions):
+Encode it (the result is one long line):
 
-- `ANDROID_KEYSTORE_BASE64` – output of the base64 command
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
+- Linux: `base64 -w0 release.keystore > keystore.b64`
+- macOS: `base64 -i release.keystore -o keystore.b64`
+- Windows PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("release.keystore")) | Set-Content keystore.b64`
 
-Never commit the keystore. Keep a backup: losing it means testers must uninstall once.
+Add repository secrets (Settings > Secrets and variables > Actions > New repository secret):
+
+- `ANDROID_KEYSTORE_BASE64` – contents of `keystore.b64`
+- `ANDROID_KEYSTORE_PASSWORD` – keystore password
+- `ANDROID_KEY_ALIAS` – e.g. `periodic`
+- `ANDROID_KEY_PASSWORD` – key password
+
+Or with the GitHub CLI:
+
+```bash
+gh secret set ANDROID_KEYSTORE_BASE64 < keystore.b64
+gh secret set ANDROID_KEYSTORE_PASSWORD
+gh secret set ANDROID_KEY_ALIAS
+gh secret set ANDROID_KEY_PASSWORD
+```
+
+Then delete `keystore.b64`, never commit the keystore, and back up the keystore and
+passwords in a password manager. Losing them means testers must uninstall once.
+
+Verify: run the "Build APK" workflow twice, download `periodic-release-apk`, install
+the first (uninstall any old debug build once), then install the second over it.
+Pull requests from forks don't receive secrets, so their release build will fail
+with "Release signing is not configured".
 
 ## versionCode
 
