@@ -61,6 +61,7 @@ import com.emathias.periodic.util.RecurrenceFormatter
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -102,7 +103,7 @@ fun ScheduledItemCreationDialog(
     val endDateChanged = endDate != initialEndDate
     val endValid = endDate?.isBefore(startDate) != true &&
         (!isEditing || !endDateChanged || endDate == null || endDate.isAfter(LocalDate.now()))
-    val canSubmit = title.isNotBlank() && (!isEditing && intervalValid || isEditing) && endValid
+    val canSubmit = title.isNotBlank() && (isEditing || intervalValid) && endValid
     val dismissEvent = if (isEditing) HideEditDialog else HideAddDialog
 
     Dialog(onDismissRequest = { onEvent(dismissEvent) }) {
