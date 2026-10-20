@@ -49,7 +49,7 @@ class NotificationHelper @Inject constructor(
         val manager = NotificationManagerCompat.from(context)
         items.forEach { item ->
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(item.title)
                 .setContentText(item.description)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(item.description))
