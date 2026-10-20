@@ -36,6 +36,8 @@ class ScheduledItemProcessor @Inject constructor(
         since: Instant,
         mostRecentProcessTime: Instant?,
     ) {
+        if (item.archivedAt != null) return
+
         // One open to-do per scheduled item: nothing new until the user completes it.
         if (todoItemDao.getOpenForScheduledItem(item.id) != null) return
 

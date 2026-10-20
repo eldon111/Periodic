@@ -102,7 +102,7 @@ fun ScheduledItemCreationDialog(
 
     val endDateChanged = endDate != initialEndDate
     val endValid = endDate?.isBefore(startDate) != true &&
-        (!isEditing || !endDateChanged || endDate == null || endDate.isAfter(LocalDate.now()))
+        (!endDateChanged || endDate == null || endDate.isAfter(LocalDate.now()))
     val canSubmit = title.isNotBlank() && (isEditing || intervalValid) && endValid
     val dismissEvent = if (isEditing) HideEditDialog else HideAddDialog
 
@@ -308,7 +308,12 @@ fun ScheduledItemCreationDialog(
                                 "End date",
                                 it,
                                 isError = !endValid,
-                                errorText = if (!endValid) " (before start)" else null,
+                                errorText = when {
+                                    it.isBefore(startDate) -> " (before start)"
+                                    endDateChanged && !it.isAfter(LocalDate.now()) ->
+                                        " (must be in the future)"
+                                    else -> null
+                                },
                                 onPick = { d -> endDate = d },
                             )
                         }
