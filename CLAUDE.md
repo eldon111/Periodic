@@ -63,7 +63,7 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 
 ### Key Data Flow
 1. **Scheduled Items**: Created via AI or manual input, stored with an iCalendar-style `Schedule` (DTSTART + RRULE)
-2. **Background Processing**: `ScheduledItemWorker` runs every 15 minutes, processes due items
+2. **Background Processing**: `ScheduledItemWorker` runs once at app startup and processes due items; `DailyNotificationWorker` posts the daily reminders at the configured time
 3. **Todo Generation**: Scheduled items automatically create todo items when executed
 4. **History Tracking**: Execution history prevents duplicate processing
 
@@ -99,7 +99,7 @@ See `AWS_SECURITY_SETUP.md` for detailed security configuration.
 
 ### Background Processing
 - WorkManager integration with Hilt dependency injection
-- 15-minute periodic processing plus one-time startup execution
+- One-time startup processing (`ScheduledItemWorker`) plus a daily notification run (`DailyNotificationWorker`, time configurable in Settings)
 - Prevents duplicate execution through history tracking
 
 ### Testing Structure
