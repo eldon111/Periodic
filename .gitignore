@@ -28,3 +28,8 @@ local.properties
 keystore.properties
 secrets.properties
 aws-credentials.properties
+
+# Release signing
+*.keystore
+*.jks
+keystore.b64
