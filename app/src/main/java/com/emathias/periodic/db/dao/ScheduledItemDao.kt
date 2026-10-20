@@ -21,6 +21,6 @@ interface ScheduledItemDao {
     @Delete
     suspend fun delete(scheduledItem: ScheduledItem)
 
-    @Query("SELECT * FROM ScheduledItem")
+    @Query("SELECT * FROM ScheduledItem WHERE archivedAt IS NULL")
     fun getAll(): Flow<List<ScheduledItem>>
 }
