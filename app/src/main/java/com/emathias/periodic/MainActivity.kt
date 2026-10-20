@@ -86,6 +86,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isFirstLaunch = getPreferences(MODE_PRIVATE)
+            .getBoolean(KEY_FIRST_LAUNCH, true)
+        getPreferences(MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_FIRST_LAUNCH, false)
+            .apply()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
                 .launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -94,9 +100,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             PeriodicTheme {
                 var currentScreen by remember { mutableStateOf(
-                    if (intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true) Screen.TodoList
-                    else Screen.ScheduledItems
+                    when {
+                        intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true -> Screen.TodoList
+                        isFirstLaunch -> Screen.ScheduledItems
+                        else -> Screen.TodoList
+                    }
                 ) }
+                var scheduledItemIdToFocus by remember { mutableStateOf<Long?>(null) }
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
@@ -107,6 +117,9 @@ class MainActivity : ComponentActivity() {
                             currentScreen = currentScreen,
                             onScreenSelected = { screen ->
                                 currentScreen = screen
+                                if (screen != Screen.ScheduledItems) {
+                                    scheduledItemIdToFocus = null
+                                }
                                 scope.launch {
                                     drawerState.close()
                                 }
@@ -120,6 +133,10 @@ class MainActivity : ComponentActivity() {
                             ScheduledItemScreen(
                                 state = state,
                                 onEvent = scheduledItemViewModel::onEvent,
+                                scheduledItemIdToFocus = scheduledItemIdToFocus,
+                                onScheduledItemFocused = {
+                                    scheduledItemIdToFocus = null
+                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()
@@ -159,6 +176,10 @@ class MainActivity : ComponentActivity() {
                             TodoItemScreen(
                                 state = state,
                                 onEvent = todoItemViewModel::onEvent,
+                                onScheduledItemClick = { scheduledItemId ->
+                                    scheduledItemIdToFocus = scheduledItemId
+                                    currentScreen = Screen.ScheduledItems
+                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()
@@ -176,5 +197,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_TODOS = "open_todos"
+        private const val KEY_FIRST_LAUNCH = "first_launch"
     }
 }
