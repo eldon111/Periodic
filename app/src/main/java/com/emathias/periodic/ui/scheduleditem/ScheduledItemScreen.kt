@@ -47,9 +47,9 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import kotlin.random.Random
 
-private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 900L
-private const val SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS = 250
-private const val SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS = 600
+private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 500L
+private const val SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS = 100
+private const val SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS = 1000
 
 @Composable
 fun ScheduledItemScreen(
