@@ -100,9 +100,10 @@ fun ScheduledItemCreationDialog(
         mutableStateOf(initialEndDate)
     }
 
-    val endDateChanged = endDate != initialEndDate
-    val endValid = endDate?.isBefore(startDate) != true &&
-        (!endDateChanged || endDate == null || endDate.isAfter(LocalDate.now()))
+    val selectedEndDate = endDate
+    val endDateChanged = selectedEndDate != initialEndDate
+    val endValid = selectedEndDate?.isBefore(startDate) != true &&
+        (!endDateChanged || selectedEndDate == null || selectedEndDate.isAfter(LocalDate.now()))
     val canSubmit = title.isNotBlank() && (isEditing || intervalValid) && endValid
     val dismissEvent = if (isEditing) HideEditDialog else HideAddDialog
 
