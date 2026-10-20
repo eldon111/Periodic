@@ -99,6 +99,7 @@ fun ScheduledItemScreen(
         ScheduledItemList(
             state.scheduledItems,
             onEvent,
+            highlightedItemId = highlightedItemId,
             listState = listState,
             modifier = Modifier.padding(innerPadding)
         )
@@ -113,6 +114,7 @@ fun ScheduledItemList(
     scheduledItems: List<ScheduledItem>,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    highlightedItemId: Long? = null,
     listState: LazyListState = rememberLazyListState(),
 ) {
     LazyColumn(
