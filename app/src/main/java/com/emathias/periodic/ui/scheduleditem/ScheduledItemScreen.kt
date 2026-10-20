@@ -1,6 +1,7 @@
 package com.emathias.periodic.ui.scheduleditem
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,7 +46,9 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import kotlin.random.Random
 
-private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 1_500L
+private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 900L
+private const val SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS = 250
+private const val SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS = 600
 
 @Composable
 fun ScheduledItemScreen(
@@ -139,14 +142,23 @@ fun ScheduledItemInfoBox(
     modifier: Modifier = Modifier,
     highlighted: Boolean = false,
 ) {
-    val containerColor by animateColorAsState(
-        targetValue = if (highlighted) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
+    val highlightTransition = updateTransition(
+        targetState = highlighted,
         label = "scheduled item highlight",
     )
+    val containerColor by highlightTransition.animateColor(
+        transitionSpec = {
+            if (false isTransitioningTo true) {
+                tween(SCHEDULED_ITEM_HIGHLIGHT_ENTER_MILLIS)
+            } else {
+                tween(SCHEDULED_ITEM_HIGHLIGHT_EXIT_MILLIS)
+            }
+        },
+        label = "scheduled item highlight color",
+    ) { isHighlighted ->
+        if (isHighlighted) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surfaceVariant
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
