@@ -3,6 +3,7 @@ package com.emathias.periodic.config
 import android.content.Context
 import androidx.room.Room
 import com.emathias.periodic.db.dao.AppDatabase
+import com.emathias.periodic.db.dao.MIGRATION_8_9
 import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.dao.ScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.ScheduledItemProcessHistoryDao
@@ -25,7 +26,7 @@ class RoomModule {
                 AppDatabase::class.java,
                 "todolist.db"
             )
-            .fallbackToDestructiveMigration()
+            .addMigrations(MIGRATION_8_9)
             .build()
     }
 

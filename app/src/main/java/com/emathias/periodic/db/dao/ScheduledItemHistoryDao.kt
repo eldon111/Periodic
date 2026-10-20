@@ -27,5 +27,5 @@ interface ScheduledItemHistoryDao {
             LIMIT 1
         """
     )
-    fun getMostRecentForItem(scheduledItemId: Long): Flow<ScheduledItemHistory>
+    fun getMostRecentForItem(scheduledItemId: Long): Flow<ScheduledItemHistory?>
 }

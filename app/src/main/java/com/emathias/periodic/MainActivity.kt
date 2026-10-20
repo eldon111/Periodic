@@ -34,7 +34,6 @@ import com.emathias.periodic.notification.NotificationSettings
 import com.emathias.periodic.ui.settings.SettingsScreen
 import com.emathias.periodic.notification.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -93,7 +92,10 @@ class MainActivity : ComponentActivity() {
         notificationScheduler.schedule()
         setContent {
             PeriodicTheme {
-                var currentScreen by remember { mutableStateOf(Screen.ScheduledItems) }
+                var currentScreen by remember { mutableStateOf(
+                    if (intent?.getBooleanExtra(EXTRA_OPEN_TODOS, false) == true) Screen.TodoList
+                    else Screen.ScheduledItems
+                ) }
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
@@ -137,10 +139,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onSendNotificationsNow = {
                                     scope.launch {
-                                        val today = LocalDate.now()
-                                        notificationHelper.notify(
-                                            scheduledItemDao.getAll().first()
-                                                .filter { NotificationHelper.isDueOn(it, today) }
+                                        notificationHelper.notifySummary(
+                                            db.todoItemDao().countOpen(),
+                                            db.todoItemDao().countOverdue(LocalDate.now().toEpochDay()),
                                         )
                                     }
                                 },
@@ -171,4 +172,8 @@ class MainActivity : ComponentActivity() {
     }
 
 
+
+    companion object {
+        const val EXTRA_OPEN_TODOS = "open_todos"
+    }
 }

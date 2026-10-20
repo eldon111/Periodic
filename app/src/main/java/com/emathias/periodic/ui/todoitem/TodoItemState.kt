@@ -1,7 +1,10 @@
 package com.emathias.periodic.ui.todoitem
 
 import com.emathias.periodic.db.entities.TodoItem
+import java.time.LocalDate
 
 data class TodoItemState(
-    val todoItems: List<TodoItem> = emptyList(),
+    val openItems: List<TodoItem> = emptyList(),
+    val completedItems: List<TodoItem> = emptyList(),
+    val today: LocalDate = LocalDate.now(),
 )

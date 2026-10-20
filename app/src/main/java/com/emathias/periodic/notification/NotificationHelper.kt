@@ -13,10 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.emathias.periodic.MainActivity
 import com.emathias.periodic.R
-import com.emathias.periodic.db.entities.ScheduledItem
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.time.LocalDate
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,8 +31,12 @@ class NotificationHelper @Inject constructor(
         }
     }
 
-    /** Posts one notification per item. Returns silently if permission is not granted. */
-    fun notify(items: List<ScheduledItem>) {
+    /**
+     * Posts a single summary of open to-dos. Posts nothing if there are none, or if permission
+     * is not granted.
+     */
+    fun notifySummary(openCount: Int, overdueCount: Int) {
+        if (openCount <= 0) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
@@ -43,32 +44,31 @@ class NotificationHelper @Inject constructor(
 
         createChannel()
         val contentIntent = PendingIntent.getActivity(
-            context, 0, Intent(context, MainActivity::class.java),
+            context, 0,
+            Intent(context, MainActivity::class.java)
+                .putExtra(MainActivity.EXTRA_OPEN_TODOS, true),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val manager = NotificationManagerCompat.from(context)
-        items.forEach { item ->
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(item.title)
-                .setContentText(item.description)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(item.description))
-                .setContentIntent(contentIntent)
-                .setAutoCancel(true)
-                .build()
-            manager.notify(item.id.toInt(), notification)
-        }
+        val text = summaryText(openCount, overdueCount)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Open to-dos")
+            .setContentText(text)
+            .setContentIntent(contentIntent)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(context).notify(SUMMARY_NOTIFICATION_ID, notification)
     }
 
     companion object {
         const val CHANNEL_ID = "daily_reminders"
 
-        /** True if [item] has an occurrence on [date] in the device's local time zone. */
-        fun isDueOn(item: ScheduledItem, date: LocalDate, zone: ZoneId = ZoneId.systemDefault()): Boolean {
-            val startOfDay = date.atStartOfDay(zone).toInstant()
-            val endOfDay = date.plusDays(1).atStartOfDay(zone).toInstant()
-            val next = item.schedule.nextOccurrence(startOfDay.minusMillis(1)) ?: return false
-            return next.isBefore(endOfDay)
+        const val SUMMARY_NOTIFICATION_ID = 1
+
+        fun summaryText(openCount: Int, overdueCount: Int): String {
+            val noun = if (openCount == 1) "open to-do" else "open to-dos"
+            return if (overdueCount > 0) "You have $openCount $noun ($overdueCount overdue)"
+            else "You have $openCount $noun"
         }
     }
 }
