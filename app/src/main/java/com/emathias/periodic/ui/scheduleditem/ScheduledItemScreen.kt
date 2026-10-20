@@ -1,5 +1,6 @@
 package com.emathias.periodic.ui.scheduleditem
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -35,9 +40,12 @@ import com.emathias.periodic.ui.shared.PeriodicTopAppBar
 import com.emathias.periodic.model.Schedule
 import com.emathias.periodic.util.RecurrenceFormatter
 import com.emathias.periodic.util.DateTimeUtils
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.OffsetDateTime
 import kotlin.random.Random
+
+private const val SCHEDULED_ITEM_HIGHLIGHT_MILLIS = 1_500L
 
 @Composable
 fun ScheduledItemScreen(
@@ -48,13 +56,22 @@ fun ScheduledItemScreen(
     onScheduledItemFocused: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    var highlightedItemId by remember { mutableStateOf<Long?>(null) }
+
     LaunchedEffect(state.scheduledItems, scheduledItemIdToFocus) {
         scheduledItemIdToFocus?.let { itemId ->
             val index = state.scheduledItems.indexOfFirst { it.id == itemId }
             if (index >= 0) {
                 listState.animateScrollToItem(index)
+                highlightedItemId = itemId
                 onScheduledItemFocused()
             }
+        }
+    }
+    LaunchedEffect(highlightedItemId) {
+        if (highlightedItemId != null) {
+            delay(SCHEDULED_ITEM_HIGHLIGHT_MILLIS)
+            highlightedItemId = null
         }
     }
 
@@ -106,7 +123,8 @@ fun ScheduledItemList(
         items(scheduledItems) { scheduledItem ->
             ScheduledItemInfoBox(
                 scheduledItem = scheduledItem,
-                onEvent = onEvent
+                onEvent = onEvent,
+                highlighted = scheduledItem.id == highlightedItemId,
             )
         }
     }
@@ -117,13 +135,21 @@ fun ScheduledItemInfoBox(
     scheduledItem: ScheduledItem,
     onEvent: (ScheduledItemEvent) -> Unit,
     modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
 ) {
+    val containerColor by animateColorAsState(
+        targetValue = if (highlighted) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        },
+        label = "scheduled item highlight",
+    )
+
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
