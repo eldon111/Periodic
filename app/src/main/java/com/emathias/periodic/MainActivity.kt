@@ -62,7 +62,8 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return ScheduledItemViewModel(
-                        scheduledItemDao
+                        scheduledItemDao,
+                        db.todoItemDao(),
                     ) as T
                 }
             }

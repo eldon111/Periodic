@@ -25,3 +25,9 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_TodoItem_scheduledItemId` ON `TodoItem` (`scheduledItemId`)")
     }
 }
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `ScheduledItem` ADD COLUMN `archivedAt` INTEGER")
+    }
+}

@@ -124,6 +124,26 @@ class ScheduleTest {
     }
 
     @Test
+    fun withEndDate_replacesAndRemovesUntilWithoutChangingOtherParts() {
+        val original = schedule("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;UNTIL=20271231T235959Z")
+
+        val updated = original.withEndDate(
+            LocalDate.of(2028, 1, 2),
+            zone,
+        )
+        assertEquals(
+            "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO;UNTIL=20280103T045959Z",
+            updated.rrule
+        )
+
+        assertEquals(
+            "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO",
+            updated.withEndDate(null).rrule
+        )
+        assertEquals(original.start, updated.start)
+    }
+
+    @Test
     fun formatter_describesSupportedRules() {
         fun d(rule: String?) = RecurrenceFormatter.describe(schedule(rule))
         assertEquals("Once on Jan 1, 2024", d(null))
@@ -141,6 +161,13 @@ class ScheduleTest {
         assertEquals(
             "Every week on Monday, until Dec 31, 2027",
             d("FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z")
+        )
+        assertEquals(
+            "Every week on Monday",
+            RecurrenceFormatter.describe(
+                schedule("FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z"),
+                includeUntil = false,
+            )
         )
     }
 

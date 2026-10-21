@@ -32,7 +32,7 @@ object RecurrenceFormatter {
         Part.BYDAY, Part.BYMONTHDAY, Part.BYMONTH,
     )
 
-    fun describe(schedule: Schedule): String {
+    fun describe(schedule: Schedule, includeUntil: Boolean = true): String {
         val rule = schedule.recurrenceRule
         if (schedule.rrule == null) {
             return "Once on ${schedule.start.toLocalDate().format(DATE_FORMAT)}"
@@ -42,7 +42,7 @@ object RecurrenceFormatter {
         val base = describeRule(rule, schedule.start.toLocalDate()) ?: return CUSTOM
         val ending = when {
             rule.count != null -> ", ${rule.count} ${if (rule.count == 1) "time" else "times"}"
-            rule.until != null -> {
+            includeUntil && rule.until != null -> {
                 val until = rule.until!!
                 val date = if (until.isAllDay) {
                     LocalDate.of(until.year, until.month + 1, until.dayOfMonth)

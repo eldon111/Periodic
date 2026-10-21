@@ -4,6 +4,7 @@ import org.dmfs.rfc5545.DateTime
 import org.dmfs.rfc5545.recur.InvalidRecurrenceRuleException
 import org.dmfs.rfc5545.recur.RecurrenceRule
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -67,8 +68,27 @@ data class Schedule(
         rrule?.let { append('\n').append("RRULE:").append(it) }
     }
 
+    /**
+     * Returns this schedule with its recurrence end date replaced or removed.
+     * All other RRULE parts are preserved.
+     */
+    fun withEndDate(endDate: LocalDate?, zone: ZoneId = start.zone): Schedule {
+        val rule = rrule ?: return this
+        val parts = rule.split(';')
+            .filterNot { it.substringBefore('=').equals("UNTIL", ignoreCase = true) }
+            .toMutableList()
+        endDate?.let {
+            val endOfDay = it.plusDays(1).atStartOfDay(zone)
+                .minusSeconds(1)
+                .withZoneSameInstant(ZoneOffset.UTC)
+            parts += "UNTIL=" + endOfDay.format(UNTIL_FORMAT)
+        }
+        return copy(rrule = parts.joinToString(";"))
+    }
+
     companion object {
         private val LOCAL_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
+        private val UNTIL_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
 
         fun oneTime(start: Instant, zone: ZoneId = ZoneId.systemDefault()) =
             Schedule(start.atZone(zone))

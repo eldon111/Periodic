@@ -41,6 +41,18 @@ object FakeTodoItemDao : TodoItemDao {
     override suspend fun getOpenForScheduledItem(scheduledItemId: Long): TodoItem? =
         map.values.firstOrNull { it.scheduledItemId == scheduledItemId && !it.completed }
 
+    override suspend fun updateOpenContent(
+        scheduledItemId: Long,
+        title: String,
+        description: String,
+    ): Int {
+        val openItems = map.values.filter {
+            it.scheduledItemId == scheduledItemId && !it.completed
+        }
+        openItems.forEach { map[it.id] = it.copy(title = title, description = description) }
+        return openItems.size
+    }
+
     override suspend fun countOpen(): Int = map.values.count { !it.completed }
 
     override suspend fun countOverdue(today: Long): Int =

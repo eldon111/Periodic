@@ -48,15 +48,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.window.Dialog
+import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.model.MonthlyMode
 import com.emathias.periodic.model.RepeatUnit
 import com.emathias.periodic.model.Repetition
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideEditDialog
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.CreateItem
 import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.HideAddDialog
+import com.emathias.periodic.ui.scheduleditem.ScheduledItemEvent.UpdateItem
+import com.emathias.periodic.util.RecurrenceFormatter
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -66,22 +71,43 @@ private val DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var startDate by remember { mutableStateOf(LocalDate.now()) }
+fun ScheduledItemCreationDialog(
+    onEvent: (ScheduledItemEvent) -> Unit,
+    scheduledItem: ScheduledItem? = null,
+) {
+    val isEditing = scheduledItem != null
+    val itemZone = scheduledItem?.schedule?.start?.zone ?: ZoneId.systemDefault()
+    val initialStartDate = scheduledItem?.schedule?.start?.toLocalDate() ?: LocalDate.now()
+    val initialEndDate = scheduledItem?.expiration
+        ?.atZone(itemZone)
+        ?.toLocalDate()
+    var title by remember(scheduledItem?.id) {
+        mutableStateOf(scheduledItem?.title.orEmpty())
+    }
+    var description by remember(scheduledItem?.id) {
+        mutableStateOf(scheduledItem?.description.orEmpty())
+    }
+    var startDate by remember(scheduledItem?.id) {
+        mutableStateOf(initialStartDate)
+    }
     var unit by remember { mutableStateOf(RepeatUnit.WEEK) }
     var intervalText by remember { mutableStateOf("1") }
     val interval = intervalText.toIntOrNull() ?: 1
     val intervalValid = intervalText.toIntOrNull()?.let { it in 1..99 } == true
     var weekdays by remember { mutableStateOf(emptySet<DayOfWeek>()) }
     var monthlyMode by remember { mutableStateOf(MonthlyMode.DAY_OF_MONTH) }
-    var endDate by remember { mutableStateOf<LocalDate?>(null) }
+    var endDate by remember(scheduledItem?.id) {
+        mutableStateOf(initialEndDate)
+    }
 
-    val endValid = endDate?.isBefore(startDate) != true
-    val canCreate = title.isNotBlank() && intervalValid && endValid
+    val selectedEndDate = endDate
+    val endDateChanged = selectedEndDate != initialEndDate
+    val endValid = selectedEndDate?.isBefore(startDate) != true &&
+        (!endDateChanged || selectedEndDate == null || selectedEndDate.isAfter(LocalDate.now()))
+    val canSubmit = title.isNotBlank() && (isEditing || intervalValid) && endValid
+    val dismissEvent = if (isEditing) HideEditDialog else HideAddDialog
 
-    Dialog(onDismissRequest = { onEvent(HideAddDialog) }) {
+    Dialog(onDismissRequest = { onEvent(dismissEvent) }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -96,7 +122,7 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("New scheduled item")
+                Text(if (isEditing) "Edit scheduled item" else "New scheduled item")
                 TextField(
                     value = title,
                     singleLine = true,
@@ -110,121 +136,214 @@ fun ScheduledItemCreationDialog(onEvent: (ScheduledItemEvent) -> Unit) {
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                DateField("Start Date", startDate, onPick = { startDate = it })
+                DateField(
+                    "Start Date",
+                    startDate,
+                    enabled = !isEditing,
+                    onPick = { startDate = it },
+                )
 
-                run {
-                    var unitMenuOpen by remember { mutableStateOf(false) }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text("Every")
-                        OutlinedTextField(
-                            value = intervalText,
-                            onValueChange = { intervalText = it.filter(Char::isDigit).take(2) },
-                            singleLine = true,
-                            isError = !intervalValid,
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.width(64.dp),
-                        )
-                        ExposedDropdownMenuBox(
-                            expanded = unitMenuOpen,
-                            onExpandedChange = { unitMenuOpen = it },
-                            modifier = Modifier.weight(1f),
+                if (scheduledItem != null) {
+                    Text("Repeats")
+                    Text(
+                        text = RecurrenceFormatter.describe(
+                            scheduledItem.schedule,
+                            includeUntil = false,
+                        ),
+                        style = LocalTextStyle.current,
+                    )
+                    if (scheduledItem.repeats) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(
+                                    value = endDate != null,
+                                    onValueChange = {
+                                        endDate = if (it) startDate.plusMonths(1) else null
+                                    },
+                                    role = Role.Checkbox,
+                                ),
                         ) {
-                            OutlinedTextField(
-                                value = unit.label + "s",
-                                onValueChange = {},
-                                readOnly = true,
-                                singleLine = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitMenuOpen) },
-                                modifier = Modifier
-                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                    .widthIn(max = 160.dp),
+                            Checkbox(checked = endDate != null, onCheckedChange = null)
+                            Text("Ends", modifier = Modifier.padding(start = 8.dp))
+                        }
+                        endDate?.let {
+                            DateField(
+                                "End date",
+                                it,
+                                isError = !endValid,
+                                errorText = when {
+                                    it.isBefore(startDate) -> " (before start)"
+                                    endDateChanged && !it.isAfter(LocalDate.now()) ->
+                                        " (must be in the future)"
+                                    else -> null
+                                },
+                                onPick = { d -> endDate = d },
                             )
-                            ExposedDropdownMenu(
+                        }
+                    }
+                } else {
+                    run {
+                        Text("Repeats")
+                        var unitMenuOpen by remember { mutableStateOf(false) }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text("Every")
+                            OutlinedTextField(
+                                value = intervalText,
+                                onValueChange = { intervalText = it.filter(Char::isDigit).take(2) },
+                                singleLine = true,
+                                isError = !intervalValid,
+                                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.width(64.dp),
+                            )
+                            ExposedDropdownMenuBox(
                                 expanded = unitMenuOpen,
-                                onDismissRequest = { unitMenuOpen = false },
+                                onExpandedChange = { unitMenuOpen = it },
+                                modifier = Modifier.weight(1f),
                             ) {
-                                RepeatUnit.values().forEach {
-                                    DropdownMenuItem(
-                                        text = { Text(it.label + "s") },
-                                        onClick = {
-                                            unit = it
-                                            unitMenuOpen = false
-                                        },
-                                    )
+                                OutlinedTextField(
+                                    value = unit.label + "s",
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    singleLine = true,
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(
+                                            expanded = unitMenuOpen
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                        .widthIn(max = 160.dp),
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = unitMenuOpen,
+                                    onDismissRequest = { unitMenuOpen = false },
+                                ) {
+                                    RepeatUnit.values().forEach {
+                                        DropdownMenuItem(
+                                            text = { Text(it.label + "s") },
+                                            onClick = {
+                                                unit = it
+                                                unitMenuOpen = false
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                    when (unit) {
-                        RepeatUnit.WEEK -> {
-                            Text("On")
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                DayOfWeek.values().forEach { day ->
-                                    FilterChip(
-                                        selected = day in weekdays,
-                                        onClick = {
-                                            weekdays = if (day in weekdays) weekdays - day else weekdays + day
-                                        },
-                                        label = { Text(day.getDisplayName(TextStyle.NARROW, Locale.US)) },
+                        when (unit) {
+                            RepeatUnit.WEEK -> {
+                                Text("On")
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    DayOfWeek.values().forEach { day ->
+                                        FilterChip(
+                                            selected = day in weekdays,
+                                            onClick = {
+                                                weekdays = if (day in weekdays) weekdays - day
+                                                else weekdays + day
+                                            },
+                                            label = {
+                                                Text(
+                                                    day.getDisplayName(
+                                                        TextStyle.NARROW,
+                                                        Locale.US
+                                                    )
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                                if (weekdays.isEmpty()) {
+                                    Text(
+                                        "Repeats on ${
+                                            startDate.dayOfWeek.getDisplayName(
+                                                TextStyle.FULL,
+                                                Locale.US
+                                            )
+                                        } unless days are selected."
                                     )
                                 }
                             }
-                            if (weekdays.isEmpty()) {
-                                Text("Repeats on ${startDate.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.US)} unless days are selected.")
-                            }
-                        }
 
-                        RepeatUnit.MONTH -> Column {
-                            MonthlyOption("On day ${startDate.dayOfMonth}", monthlyMode == MonthlyMode.DAY_OF_MONTH) {
-                                monthlyMode = MonthlyMode.DAY_OF_MONTH
+                            RepeatUnit.MONTH -> Column {
+                                MonthlyOption(
+                                    "On day ${startDate.dayOfMonth}",
+                                    monthlyMode == MonthlyMode.DAY_OF_MONTH
+                                ) {
+                                    monthlyMode = MonthlyMode.DAY_OF_MONTH
+                                }
+                                MonthlyOption(
+                                    "On the ${Repetition.nthWeekdayLabel(startDate)}",
+                                    monthlyMode == MonthlyMode.NTH_WEEKDAY
+                                ) {
+                                    monthlyMode = MonthlyMode.NTH_WEEKDAY
+                                }
+                                MonthlyOption(
+                                    "On the last day of the month",
+                                    monthlyMode == MonthlyMode.LAST_DAY
+                                ) {
+                                    monthlyMode = MonthlyMode.LAST_DAY
+                                }
                             }
-                            MonthlyOption("On the ${Repetition.nthWeekdayLabel(startDate)}", monthlyMode == MonthlyMode.NTH_WEEKDAY) {
-                                monthlyMode = MonthlyMode.NTH_WEEKDAY
-                            }
-                            MonthlyOption("On the last day of the month", monthlyMode == MonthlyMode.LAST_DAY) {
-                                monthlyMode = MonthlyMode.LAST_DAY
-                            }
-                        }
 
-                        else -> Unit
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                value = endDate != null,
-                                onValueChange = { endDate = if (it) startDate.plusMonths(1) else null },
-                                role = Role.Checkbox,
-                            ),
-                    ) {
-                        Checkbox(checked = endDate != null, onCheckedChange = null)
-                        Text("Ends", modifier = Modifier.padding(start = 8.dp))
-                    }
-                    endDate?.let {
-                        DateField("End date", it, isError = !endValid, onPick = { d -> endDate = d })
+                            else -> Unit
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .toggleable(
+                                    value = endDate != null,
+                                    onValueChange = {
+                                        endDate = if (it) startDate.plusMonths(1) else null
+                                    },
+                                    role = Role.Checkbox,
+                                ),
+                        ) {
+                            Checkbox(checked = endDate != null, onCheckedChange = null)
+                            Text("Ends", modifier = Modifier.padding(start = 8.dp))
+                        }
+                        endDate?.let {
+                            DateField(
+                                "End date",
+                                it,
+                                isError = !endValid,
+                                errorText = when {
+                                    it.isBefore(startDate) -> " (before start)"
+                                    endDateChanged && !it.isAfter(LocalDate.now()) ->
+                                        " (must be in the future)"
+                                    else -> null
+                                },
+                                onPick = { d -> endDate = d },
+                            )
+                        }
                     }
                 }
 
                 Button(
                     onClick = {
-                        val repetition = Repetition(
-                            unit = unit,
-                            interval = interval,
-                            weekdays = weekdays,
-                            monthlyMode = monthlyMode,
-                            endDate = endDate,
-                        )
-                        onEvent(CreateItem(title, description, startDate, repetition))
+                        if (scheduledItem != null) {
+                            onEvent(UpdateItem(scheduledItem, title, description, endDate))
+                        } else {
+                            val repetition = Repetition(
+                                unit = unit,
+                                interval = interval,
+                                weekdays = weekdays,
+                                monthlyMode = monthlyMode,
+                                endDate = endDate,
+                            )
+                            onEvent(CreateItem(title, description, startDate, repetition))
+                        }
                     },
-                    enabled = canCreate,
+                    enabled = canSubmit,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 ) {
-                    Text("Create")
+                    Text(if (isEditing) "Save" else "Create")
                 }
             }
         }
@@ -250,13 +369,19 @@ private fun DateField(
     label: String,
     date: LocalDate,
     isError: Boolean = false,
+    errorText: String? = null,
+    enabled: Boolean = true,
     onPick: (LocalDate) -> Unit,
 ) {
     var showPicker by remember { mutableStateOf(false) }
     Column {
         Text(label)
-        OutlinedButton(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(date.format(DATE_FORMAT) + if (isError) " (before start)" else "")
+        OutlinedButton(
+            enabled = enabled,
+            onClick = { showPicker = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(date.format(DATE_FORMAT) + (errorText ?: if (isError) " (before start)" else ""))
         }
     }
     if (showPicker) {
@@ -284,5 +409,5 @@ private fun DateField(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ScheduledItemCreationDialogPreview() {
-    ScheduledItemCreationDialog { }
+    ScheduledItemCreationDialog(onEvent = { })
 }

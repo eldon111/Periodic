@@ -29,6 +29,15 @@ interface TodoItemDao {
     @Query("SELECT * FROM TodoItem WHERE scheduledItemId = :scheduledItemId AND completedAt IS NULL LIMIT 1")
     suspend fun getOpenForScheduledItem(scheduledItemId: Long): TodoItem?
 
+    @Query(
+        """
+            UPDATE TodoItem
+            SET title = :title, description = :description
+            WHERE scheduledItemId = :scheduledItemId AND completedAt IS NULL
+        """
+    )
+    suspend fun updateOpenContent(scheduledItemId: Long, title: String, description: String): Int
+
     @Query("SELECT COUNT(*) FROM TodoItem WHERE completedAt IS NULL")
     suspend fun countOpen(): Int
 

@@ -145,4 +145,13 @@ class ScheduledItemProcessorTest {
         Assert.assertEquals(2, FakeTodoItemDao.map.size)
         Assert.assertEquals(1, FakeTodoItemDao.countOpen())
     }
+
+    @Test
+    fun itDoesNotProcessArchivedItems() = runBlocking {
+        FakeScheduledItemDao.insert(dailyItem.copy(archivedAt = now))
+
+        processor.processAll(Instant.MIN)
+
+        Assert.assertTrue(FakeTodoItemDao.map.isEmpty())
+    }
 }

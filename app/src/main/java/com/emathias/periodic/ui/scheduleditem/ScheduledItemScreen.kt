@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,14 +17,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -110,6 +117,37 @@ fun ScheduledItemScreen(
         if (state.showingAddDialog) {
             ScheduledItemCreationDialog(onEvent)
         }
+        state.editingItem?.let { scheduledItem ->
+            ScheduledItemCreationDialog(onEvent, scheduledItem)
+        }
+        state.itemToDelete?.let { scheduledItem ->
+            AlertDialog(
+                onDismissRequest = {
+                    onEvent(ScheduledItemEvent.HideDeleteConfirmation)
+                },
+                title = { Text("Archive scheduled item?") },
+                text = {
+                    Text(
+                        "This schedule will stop generating new to-dos. " +
+                            "Existing to-dos and history will be preserved."
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onEvent(ScheduledItemEvent.ArchiveItem(scheduledItem))
+                    }) {
+                        Text("Archive")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        onEvent(ScheduledItemEvent.HideDeleteConfirmation)
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -173,14 +211,49 @@ fun ScheduledItemInfoBox(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Title
-            Text(
-                text = scheduledItem.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            var menuExpanded by remember { mutableStateOf(false) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(
+                    text = scheduledItem.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Edit") },
+                            onClick = {
+                                menuExpanded = false
+                                onEvent(ScheduledItemEvent.ShowEditDialog(scheduledItem))
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                menuExpanded = false
+                                onEvent(
+                                    ScheduledItemEvent.ShowDeleteConfirmation(scheduledItem)
+                                )
+                            },
+                        )
+                    }
+                }
+            }
 
             val formattedFirstOccurrence =
                 DateTimeUtils.formatDate(scheduledItem.firstOccurrence)
@@ -203,7 +276,10 @@ fun ScheduledItemInfoBox(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = RecurrenceFormatter.describe(scheduledItem.schedule),
+                        text = RecurrenceFormatter.describe(
+                            scheduledItem.schedule,
+                            includeUntil = false,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

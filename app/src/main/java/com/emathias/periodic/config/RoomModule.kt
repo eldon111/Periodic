@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.emathias.periodic.db.dao.AppDatabase
 import com.emathias.periodic.db.dao.MIGRATION_8_9
+import com.emathias.periodic.db.dao.MIGRATION_9_10
 import com.emathias.periodic.db.dao.ScheduledItemDao
 import com.emathias.periodic.db.dao.ScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.ScheduledItemProcessHistoryDao
@@ -26,7 +27,7 @@ class RoomModule {
                 AppDatabase::class.java,
                 "todolist.db"
             )
-            .addMigrations(MIGRATION_8_9)
+            .addMigrations(MIGRATION_8_9, MIGRATION_9_10)
             .build()
     }
 

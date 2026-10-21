@@ -12,6 +12,7 @@ data class ScheduledItem(
     val title: String,
     val description: String,
     val schedule: Schedule,
+    val archivedAt: Instant? = null,
 ) {
     @get:Ignore
     val startsAt: Instant get() = schedule.start.toInstant()

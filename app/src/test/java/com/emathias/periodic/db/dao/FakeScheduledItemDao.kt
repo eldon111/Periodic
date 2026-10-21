@@ -16,7 +16,7 @@ object FakeScheduledItemDao : ScheduledItemDao {
                 scheduledItem.copy(id = Random.Default.nextLong())
             }
 
-        map.put(scheduledItem.id, updatedItem)
+        map[updatedItem.id] = updatedItem
         return updatedItem.id
     }
 
@@ -28,12 +28,8 @@ object FakeScheduledItemDao : ScheduledItemDao {
         }
     }
 
-    override suspend fun delete(scheduledItem: ScheduledItem) {
-        map.remove(scheduledItem.id)
-    }
-
     override fun getAll(): Flow<List<ScheduledItem>> {
-        return flowOf(map.values.toList())
+        return flowOf(map.values.filter { it.archivedAt == null }.toList())
     }
 
 }
