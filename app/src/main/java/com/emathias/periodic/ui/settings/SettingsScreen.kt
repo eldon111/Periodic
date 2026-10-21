@@ -34,6 +34,7 @@ fun SettingsScreen(
     reminderTime: LocalTime,
     onReminderTimeChange: (LocalTime) -> Unit,
     onSendNotificationsNow: () -> Unit,
+    onRunTodoCreationNow: () -> Unit,
     onMenuClick: () -> Unit,
 ) {
     var showPicker by remember { mutableStateOf(false) }
@@ -61,6 +62,12 @@ fun SettingsScreen(
             )
             Button(onClick = onSendNotificationsNow) {
                 Text("Send today's notifications now")
+            }
+            Button(
+                onClick = onRunTodoCreationNow,
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text("Run to-do creation now")
             }
         }
     }

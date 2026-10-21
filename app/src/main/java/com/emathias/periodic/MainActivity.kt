@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.emathias.periodic.db.dao.AppDatabase
 import com.emathias.periodic.db.dao.ScheduledItemDao
+import com.emathias.periodic.service.ScheduledItemProcessor
 
 import com.emathias.periodic.ui.navigation.NavigationDrawerContent
 import com.emathias.periodic.ui.navigation.Screen
@@ -46,6 +47,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var scheduledItemDao: ScheduledItemDao
+
+    @Inject
+    lateinit var scheduledItemProcessor: ScheduledItemProcessor
 
     @Inject
     lateinit var notificationScheduler: NotificationScheduler
@@ -136,6 +140,11 @@ class MainActivity : ComponentActivity() {
                                 scheduledItemIdToFocus = scheduledItemIdToFocus,
                                 onScheduledItemFocused = {
                                     scheduledItemIdToFocus = null
+                                },
+                                onRunTodoCreationNow = {
+                                    scope.launch {
+                                        scheduledItemProcessor.processAll(java.time.Instant.MIN)
+                                    }
                                 },
                                 onMenuClick = {
                                     scope.launch {
