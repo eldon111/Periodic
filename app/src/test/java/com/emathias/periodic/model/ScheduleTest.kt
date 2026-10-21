@@ -162,6 +162,13 @@ class ScheduleTest {
             "Every week on Monday, until Dec 31, 2027",
             d("FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z")
         )
+        assertEquals(
+            "Every week on Monday",
+            RecurrenceFormatter.describe(
+                schedule("FREQ=WEEKLY;BYDAY=MO;UNTIL=20271231T235959Z"),
+                includeUntil = false,
+            )
+        )
     }
 
     @Test

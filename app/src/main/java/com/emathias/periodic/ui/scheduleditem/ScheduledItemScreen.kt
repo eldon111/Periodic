@@ -276,7 +276,10 @@ fun ScheduledItemInfoBox(
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = RecurrenceFormatter.describe(scheduledItem.schedule),
+                        text = RecurrenceFormatter.describe(
+                            scheduledItem.schedule,
+                            includeUntil = false,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

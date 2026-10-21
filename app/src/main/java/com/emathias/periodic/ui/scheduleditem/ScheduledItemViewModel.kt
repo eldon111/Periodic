@@ -60,7 +60,7 @@ class ScheduledItemViewModel(
                 scheduledItemDao.insert(
                     ScheduledItem(
                         title = title,
-                        description = event.description.trim().ifEmpty { title },
+                        description = event.description.trim(),
                         schedule = schedule,
                     )
                 )
@@ -69,7 +69,7 @@ class ScheduledItemViewModel(
 
             is UpdateItem -> viewModelScope.launch {
                 val title = event.title.trim()
-                val description = event.description.trim().ifEmpty { title }
+                val description = event.description.trim()
                 scheduledItemDao.update(
                     event.scheduledItem.copy(
                         title = title,

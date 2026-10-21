@@ -144,9 +144,12 @@ fun ScheduledItemCreationDialog(
                 )
 
                 if (scheduledItem != null) {
-                    Text("Repetition")
+                    Text("Repeats")
                     Text(
-                        text = RecurrenceFormatter.describe(scheduledItem.schedule),
+                        text = RecurrenceFormatter.describe(
+                            scheduledItem.schedule,
+                            includeUntil = false,
+                        ),
                         style = LocalTextStyle.current,
                     )
                     if (scheduledItem.repeats) {
@@ -182,6 +185,7 @@ fun ScheduledItemCreationDialog(
                     }
                 } else {
                     run {
+                        Text("Repeats")
                         var unitMenuOpen by remember { mutableStateOf(false) }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
