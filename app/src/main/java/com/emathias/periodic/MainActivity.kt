@@ -141,11 +141,6 @@ class MainActivity : ComponentActivity() {
                                 onScheduledItemFocused = {
                                     scheduledItemIdToFocus = null
                                 },
-                                onRunTodoCreationNow = {
-                                    scope.launch {
-                                        scheduledItemProcessor.processAll(java.time.Instant.MIN)
-                                    }
-                                },
                                 onMenuClick = {
                                     scope.launch {
                                         drawerState.open()
@@ -170,6 +165,11 @@ class MainActivity : ComponentActivity() {
                                             db.todoItemDao().countOpen(),
                                             db.todoItemDao().countOverdue(LocalDate.now().toEpochDay()),
                                         )
+                                    }
+                                },
+                                onRunTodoCreationNow = {
+                                    scope.launch {
+                                        scheduledItemProcessor.processAll(java.time.Instant.MIN)
                                     }
                                 },
                                 onMenuClick = {
