@@ -6,10 +6,10 @@ import com.emathias.periodic.db.dao.TodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.db.entities.ScheduledItemHistory
 import com.emathias.periodic.db.entities.TodoItem
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
