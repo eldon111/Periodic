@@ -3,9 +3,13 @@ package com.emathias.periodic.service
 import com.emathias.periodic.db.dao.FakeScheduledItemDao
 import com.emathias.periodic.db.dao.FakeScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.FakeTodoItemDao
+import com.emathias.periodic.db.dao.TodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
 import com.emathias.periodic.model.Schedule
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -129,6 +133,29 @@ class ScheduledItemProcessorTest {
     fun itDoesNotCreateSecondTodoWhileOneIsOpen() = runBlocking {
         processor.process(dailyItem, Instant.MIN, null)
         processor.process(dailyItem, Instant.MIN, null)
+
+        Assert.assertEquals(1, FakeTodoItemDao.map.size)
+    }
+
+    @Test
+    fun itCreatesOnlyOneTodoWhenProcessedConcurrently() = runBlocking {
+        val yieldingTodoItemDao = object : TodoItemDao by FakeTodoItemDao {
+            override suspend fun getOpenForScheduledItem(scheduledItemId: Long) =
+                yield().let { FakeTodoItemDao.getOpenForScheduledItem(scheduledItemId) }
+        }
+        val concurrentProcessor = ScheduledItemProcessor(
+            FakeScheduledItemDao,
+            FakeScheduledItemHistoryDao,
+            yieldingTodoItemDao,
+        )
+
+        coroutineScope {
+            repeat(2) {
+                launch {
+                    concurrentProcessor.process(dailyItem, Instant.MIN, null)
+                }
+            }
+        }
 
         Assert.assertEquals(1, FakeTodoItemDao.map.size)
     }
