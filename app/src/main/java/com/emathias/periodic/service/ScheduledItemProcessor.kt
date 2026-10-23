@@ -19,8 +19,7 @@ class ScheduledItemProcessor @Inject constructor(
     val scheduledItemHistoryDao: ScheduledItemHistoryDao,
     val todoItemDao: TodoItemDao,
 ) {
-
-    suspend fun processAll(since: Instant) {
+    suspend fun processAll(since: Instant = Instant.MIN) {
         scheduledItemDao.getAll().first().forEach { item ->
             println("Processing scheduled item '${item.description}'")
             process(item, since)

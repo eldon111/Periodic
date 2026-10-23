@@ -150,7 +150,7 @@ class ScheduledItemProcessorTest {
     fun itDoesNotProcessArchivedItems() = runBlocking {
         FakeScheduledItemDao.insert(dailyItem.copy(archivedAt = now))
 
-        processor.processAll(Instant.MIN)
+        processor.processAll()
 
         Assert.assertTrue(FakeTodoItemDao.map.isEmpty())
     }

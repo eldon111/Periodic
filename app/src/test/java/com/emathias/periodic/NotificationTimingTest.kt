@@ -25,6 +25,20 @@ class NotificationTimingTest {
     }
 
     @Test
+    fun processingRunsJustAfterMidnight() {
+        assertEquals(LocalTime.of(0, 1), NotificationScheduler.PROCESSING_TIME)
+    }
+
+    @Test
+    fun processingDelayAfterMidnightIsUntilNextDay() {
+        val now = ZonedDateTime.of(2026, 10, 19, 0, 2, 0, 0, zone)
+        assertEquals(
+            Duration.ofHours(23).plusMinutes(59),
+            NotificationScheduler.delayUntilNext(NotificationScheduler.PROCESSING_TIME, now),
+        )
+    }
+
+    @Test
     fun summaryTextWithoutOverdue() {
         assertEquals("You have 1 open to-do", NotificationHelper.summaryText(1, 0))
     }
