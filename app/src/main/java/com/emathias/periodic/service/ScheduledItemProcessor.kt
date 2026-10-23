@@ -8,8 +8,6 @@ import com.emathias.periodic.db.entities.ScheduledItemHistory
 import com.emathias.periodic.db.entities.TodoItem
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
@@ -21,9 +19,7 @@ class ScheduledItemProcessor @Inject constructor(
     val scheduledItemHistoryDao: ScheduledItemHistoryDao,
     val todoItemDao: TodoItemDao,
 ) {
-    private val processMutex = Mutex()
-
-    suspend fun processAll(since: Instant) {
+    suspend fun processAll(since: Instant = Instant.MIN) {
         scheduledItemDao.getAll().first().forEach { item ->
             println("Processing scheduled item '${item.description}'")
             process(item, since)
@@ -31,22 +27,10 @@ class ScheduledItemProcessor @Inject constructor(
     }
 
     suspend fun process(item: ScheduledItem, since: Instant) {
-        processMutex.withLock {
-            processInternal(item, since, mostRecentlyProcessedAt(item))
-        }
+        process(item, since, mostRecentlyProcessedAt(item))
     }
 
     suspend fun process(
-        item: ScheduledItem,
-        since: Instant,
-        mostRecentProcessTime: Instant?,
-    ) {
-        processMutex.withLock {
-            processInternal(item, since, mostRecentProcessTime)
-        }
-    }
-
-    private suspend fun processInternal(
         item: ScheduledItem,
         since: Instant,
         mostRecentProcessTime: Instant?,

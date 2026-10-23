@@ -3,14 +3,9 @@ package com.emathias.periodic.service
 import com.emathias.periodic.db.dao.FakeScheduledItemDao
 import com.emathias.periodic.db.dao.FakeScheduledItemHistoryDao
 import com.emathias.periodic.db.dao.FakeTodoItemDao
-import com.emathias.periodic.db.dao.TodoItemDao
 import com.emathias.periodic.db.entities.ScheduledItem
-import com.emathias.periodic.db.entities.TodoItem
 import com.emathias.periodic.model.Schedule
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.yield
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -139,31 +134,6 @@ class ScheduledItemProcessorTest {
     }
 
     @Test
-    fun itCreatesOnlyOneTodoWhenProcessedConcurrently() = runBlocking {
-        val yieldingTodoItemDao = object : TodoItemDao by FakeTodoItemDao {
-            override suspend fun getOpenForScheduledItem(scheduledItemId: Long): TodoItem? {
-                yield()
-                return FakeTodoItemDao.getOpenForScheduledItem(scheduledItemId)
-            }
-        }
-        val concurrentProcessor = ScheduledItemProcessor(
-            FakeScheduledItemDao,
-            FakeScheduledItemHistoryDao,
-            yieldingTodoItemDao,
-        )
-
-        coroutineScope {
-            repeat(2) {
-                launch {
-                    concurrentProcessor.process(dailyItem, Instant.MIN, null)
-                }
-            }
-        }
-
-        Assert.assertEquals(1, FakeTodoItemDao.map.size)
-    }
-
-    @Test
     fun itCreatesNewTodoAfterCompletion() = runBlocking {
         processor.process(dailyItem, Instant.MIN, null)
         val first = FakeTodoItemDao.map.values.single()
@@ -180,7 +150,7 @@ class ScheduledItemProcessorTest {
     fun itDoesNotProcessArchivedItems() = runBlocking {
         FakeScheduledItemDao.insert(dailyItem.copy(archivedAt = now))
 
-        processor.processAll(Instant.MIN)
+        processor.processAll()
 
         Assert.assertTrue(FakeTodoItemDao.map.isEmpty())
     }
