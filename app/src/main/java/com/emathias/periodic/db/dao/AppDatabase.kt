@@ -18,7 +18,7 @@ import com.emathias.periodic.db.entities.TodoItem
         ScheduledItemHistory::class,
         ScheduledItemProcessHistory::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 //    autoMigrations = [AutoMigration(from = 1, to = 2)]
 )
