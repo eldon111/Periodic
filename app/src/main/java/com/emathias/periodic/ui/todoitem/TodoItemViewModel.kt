@@ -3,6 +3,8 @@ package com.emathias.periodic.ui.todoitem
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.emathias.periodic.db.dao.TodoItemDao
+import com.emathias.periodic.db.entities.TodoItem
+import com.emathias.periodic.ui.todoitem.TodoItemEvent.Add
 import com.emathias.periodic.ui.todoitem.TodoItemEvent.Check
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -28,6 +30,16 @@ class TodoItemViewModel(
 
     fun onEvent(event: TodoItemEvent) {
         when (event) {
+            is Add -> viewModelScope.launch {
+                todoItemDao.insert(
+                    TodoItem(
+                        scheduledItemId = null,
+                        title = event.title,
+                        description = "",
+                        dueDate = event.dueDate,
+                    )
+                )
+            }
             is Check -> viewModelScope.launch {
                 todoItemDao.update(event.todoItem.copy(completedAt = Instant.now()))
             }
